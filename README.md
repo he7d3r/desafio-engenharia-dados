@@ -37,4 +37,3 @@ A sua solução será avaliada por pelo menos 3 engenheiros de software da empre
 
 **Formato de Entrega** <br>
 Você deve compartilhar um repositório no github com o seu código e disponibilizar acesso ao dashboard desenvolvido. <br>
-Ah, por último. Você acha que consegue nos responder em quanto tempo? Uma semana é ok para você?
