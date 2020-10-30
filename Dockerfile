@@ -1,13 +1,17 @@
-FROM ubuntu:latest
+FROM python:3
 
-# Install cron
-RUN apt-get update && apt-get -y install cron make wget
+# Install some packages
+RUN apt-get update \
+    && apt-get -y install cron make wget
 
 # Create and set working directory
 WORKDIR /code
 
 # Copy the makefile to the working directory
 COPY Makefile ./
+
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
 
 # Add crontab file to the cron directory
 COPY crontab /etc/cron.d/download-data
