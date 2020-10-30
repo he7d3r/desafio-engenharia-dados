@@ -1,19 +1,15 @@
-BASEURL=http://www.mdic.gov.br/balanca/bd
-
-all: download_datasets
-
-data/exp.zip:
-	wget -nc -O $@ $(BASEURL)/comexstat-bd/ncm/EXP_COMPLETA.zip
-
-data/imp.zip:
-	wget -nc -O $@ $(BASEURL)/comexstat-bd/ncm/IMP_COMPLETA.zip
-
-data/aux.xlsx:
-	wget -nc -O $@ $(BASEURL)/tabelas/TABELAS_AUXILIARES.xlsx
-
-download_datasets: data/exp.zip data/imp.zip data/aux.xlsx
-
-.PHONY: clean
-
-clean:
-	rm data/*.zip data/*.xlsx
+BASEURL = http://www.mdic.gov.br/balanca/bd
+FIRST := $$(date --date='-3 year' +%Y)
+LAST := $$(date --date='-1 year' +%Y)
+YEARS := $(shell seq ${FIRST} ${LAST})
+IMPORTS := $(addprefix IMP_,$(addsuffix .csv,${YEARS}))
+EXPORTS := $(addprefix EXP_,$(addsuffix .csv,${YEARS}))
+.PHONY: all ${IMPORTS} ${EXPORTS}
+all: ${IMPORTS} ${EXPORTS} TABELAS_AUXILIARES.xlsx
+	echo "$@ success"
+${IMPORTS}: IMP_%.csv:
+	wget -P data -nc "$(BASEURL)/comexstat-bd/ncm/$@"
+${EXPORTS}: EXP_%.csv:
+	wget -P data -nc "$(BASEURL)/comexstat-bd/ncm/$@"
+TABELAS_AUXILIARES.xlsx:
+	wget -P data -nc $(BASEURL)/tabelas/TABELAS_AUXILIARES.xlsx
