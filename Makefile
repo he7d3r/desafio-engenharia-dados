@@ -8,8 +8,8 @@ EXPORTS := $(addprefix EXP_,$(addsuffix .csv,${YEARS}))
 all: ${IMPORTS} ${EXPORTS} TABELAS_AUXILIARES.xlsx
 	echo "$@ success"
 ${IMPORTS}: IMP_%.csv:
-	wget -P data -Nc "$(BASEURL)/comexstat-bd/ncm/$@"
+	wget -P /code/data -Nc "$(BASEURL)/comexstat-bd/ncm/$@"
 ${EXPORTS}: EXP_%.csv:
-	wget -P data -Nc "$(BASEURL)/comexstat-bd/ncm/$@"
+	wget -P /code/data -Nc "$(BASEURL)/comexstat-bd/ncm/$@"
 TABELAS_AUXILIARES.xlsx:
-	wget -P data -Nc $(BASEURL)/tabelas/TABELAS_AUXILIARES.xlsx
+	wget -P /code/data -Nc $(BASEURL)/tabelas/TABELAS_AUXILIARES.xlsx
