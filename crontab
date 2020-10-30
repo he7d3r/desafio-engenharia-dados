@@ -1,0 +1,2 @@
+0 15 * * * root /usr/bin/make -f /code/Makefile all
+# Empty line.
