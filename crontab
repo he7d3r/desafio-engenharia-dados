@@ -1,2 +1,2 @@
-0 15 * * * root /usr/bin/make -f /code/Makefile all
+* * * * * root /usr/bin/make -f /code/Makefile all >> /var/log/download-data.log 2>&1
 # Empty line.
