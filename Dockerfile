@@ -9,6 +9,8 @@ WORKDIR /code
 
 # Copy the makefile to the working directory
 COPY Makefile ./
+COPY scripts ./scripts
+RUN chmod +x ./scripts/create_db.sh
 
 # Install python packages
 COPY requirements.txt ./
