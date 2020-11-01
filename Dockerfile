@@ -9,6 +9,7 @@ WORKDIR /code
 
 # Copy the makefile to the working directory
 COPY Makefile ./
+# FIXME: Copy only the needed script (add others later)
 COPY scripts ./scripts
 RUN chmod +x ./scripts/create_db.sh
 
@@ -23,9 +24,8 @@ COPY crontab /etc/cron.d/download-data
 RUN chmod 0644 /etc/cron.d/download-data
 
 # Script for cron. See https://unix.stackexchange.com/a/453053/33604
-COPY entrypoint.sh ./
-RUN chmod +x entrypoint.sh
-ENTRYPOINT ["/code/entrypoint.sh"]
+RUN chmod +x ./scripts/entrypoint.sh
+ENTRYPOINT ["/code/scripts/entrypoint.sh"]
 
 CMD /usr/bin/make all \
     # Create the log file which tail will follow
