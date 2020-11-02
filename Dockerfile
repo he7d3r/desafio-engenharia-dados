@@ -11,11 +11,11 @@ WORKDIR /code
 COPY Makefile ./
 # FIXME: Copy only the needed script (add others later)
 COPY scripts ./scripts
-RUN chmod +x ./scripts/create_db.sh
+RUN chmod +x ./scripts/createdb.py
 
 # Install python packages
 COPY requirements.txt ./
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
 
 # Add crontab file to the cron directory
 COPY crontab /etc/cron.d/download-data
