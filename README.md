@@ -1,27 +1,22 @@
-
 # Setup
 
 ## Getting the data into an Sqlite database
 
-On linux, use Docker to build and run the image as follows (replacing `cron-downloader` with a name of your choice):
+Use Docker to build and run each image as follows (replacing `<img_name>` with a name of your choice):
 
 ```bash
-$ docker build -f cron/Dockerfile -t cron-downloader .
-Sending build context to Docker daemon  2.329GB
-Step 1/13 : FROM python:3
-...
-Successfully tagged cron-downloader:latest
-$ docker run -itv `pwd`/data:/data cron-downloader
-wget -P data -Nc "http://www.mdic.gov.br/balanca/bd/comexstat-bd/ncm/IMP_2017.csv"
-...
-all success
+docker build -f cron/Dockerfile -t <img_name> .
+docker run -itv `pwd`/data:/data <img_name>
 ```
 
-This will build the image (if not already built) and start the download of the raw data (if not already done) into the folder `data` inside the current directory in the host.
+This will build the image (if not already built) and start the download of the raw data (if not already done) into the `data` folder inside the current directory in the host, followed by the creation and population of a Sqlite database in the same directory.
 
-## Creating a "hello world" Flask app for the dashboard
+## Get the "Hello World" Flask app running
+
+As above, build and run the image using Docker like this:
 
 ```shell
-docker build -t dashboard-app:latest .
-docker run --name my-dashboard-app -d -p 5000:5000 dashboard-app
+docker build -t <img_name> .
+docker run --name <container_name> -d -p 5000:5000 <img_name>
 ```
+The app should be be available at http://localhost:5000/.
