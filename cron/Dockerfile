@@ -15,7 +15,7 @@ RUN chmod +x ./scripts/createdb.py
 
 # Install python packages
 COPY cron/requirements.txt ./
-RUN pip3 install -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Add crontab file to the cron directory
 COPY cron/crontab /etc/cron.d/download-data
