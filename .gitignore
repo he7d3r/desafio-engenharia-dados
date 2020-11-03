@@ -1,4 +1,7 @@
-data
+# Ignore everything in this directory
+data/*
+# Except this file
+!data/README.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
