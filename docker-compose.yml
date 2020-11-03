@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+    cron-downloader:
+        container_name: cron
+        build:
+            context: .
+            dockerfile: cron/Dockerfile
+        volumes:
+            - data:/data
+    app:
+        container_name: flask
+        build:
+            context: .
+            dockerfile: dashboard-app/Dockerfile
+        ports:
+            - '5000:5000'
+volumes:
+    data:
+        driver: local
+        driver_opts:
+            type: none
+            device: $PWD/data
+            o: bind
