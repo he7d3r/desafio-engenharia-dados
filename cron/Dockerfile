@@ -8,17 +8,17 @@ RUN apt-get update \
 WORKDIR /code
 
 # Copy the makefile to the working directory
-COPY Makefile ./
+COPY cron/Makefile ./
 # FIXME: Copy only the needed script (add others later)
-COPY scripts ./scripts
+COPY cron/scripts ./scripts
 RUN chmod +x ./scripts/createdb.py
 
 # Install python packages
-COPY requirements.txt ./
+COPY cron/requirements.txt ./
 RUN pip3 install -r requirements.txt
 
 # Add crontab file to the cron directory
-COPY crontab /etc/cron.d/download-data
+COPY cron/crontab /etc/cron.d/download-data
 
 # Give execution rights on the cron job
 RUN chmod 0644 /etc/cron.d/download-data
