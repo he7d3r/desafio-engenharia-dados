@@ -1,2 +1,2 @@
-* * * * * root cd /code && /usr/bin/make all >> /var/log/download-data.log 2>&1
+0 1 * * * root cd /code && /usr/bin/make all >> /var/log/download-data.log 2>&1
 # Empty line.
