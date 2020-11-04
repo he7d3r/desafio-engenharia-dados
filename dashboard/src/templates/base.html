@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-br" dir="ltr">
+  <head>
+    {% block head %}
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <title>Dashboard Simples</title>
+    {% endblock %}
+  </head>
+  <body>
+    <div id="content">
+        <h1>Dashboard de Importações e Exportações no Brasil</h1>
+        {% block content %}
+        {% endblock %}
+    </div>
+    <footer id="footer">
+      {% block footer %}
+      <i>Fork me at <a href="https://github.com/he7d3r/">GitHub</a>.</i>
+      {% endblock %}
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Navegação</h2>
+<p>Selecione o ano e o estado nos menus a seguir:</p>
+<div id="header">
+    <b>Ano</b>
+    <select name="form-year" onchange="location = this.value;console.log(this.value);">
+      {% for choice in years %}
+          <option value="{{ url_for('dashboard', state=state, year=choice) }}" {% if year==choice %} selected="selected"{% endif %}>{{ choice }}</option>
+      {% endfor %}
+    </select>    
+</div>
+<div id="sidebar">    
+    <b>Estado</b>
+    <select name="form-state" onchange="location = this.value;console.log(this.value);">
+      {% for choice in states %}
+          <option value="{{ url_for('dashboard', state=choice, year=year) }}" {% if state==choice %} selected="selected"{% endif %}>{{ choice }}</option>
+      {% endfor %}
+    </select>    
+</div>
+{% if state is not none and year is not none %}
+
+<h2>Estatísticas</h2>
+<p>Os dados a seguir se referem às importações e exportações no ano de <b>{{year}}</b> no estado <b>{{state}}</b>:</p>
+
+<h3>Importações</h3>
+{{imports.to_html(index=False) | safe}}
+
+<h3>Exportações</h3>
+{{exports.to_html(index=False) | safe}}
+
+{% endif %}
+{% endblock %}

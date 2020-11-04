@@ -1,0 +1,11 @@
+#header,
+#sidebar {
+    display: inline;
+}
+#content {
+    background-color: #eeeeff;
+}
+#footer {
+    background-color: #eeeeee;
+    text-align: right;
+}
