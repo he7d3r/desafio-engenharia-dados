@@ -11,13 +11,22 @@ services:
         container_name: flask
         build:
             context: .
-            dockerfile: dashboard-app/Dockerfile
+            dockerfile: dashboard/Dockerfile
         ports:
             - '5000:5000'
+        volumes:
+            - data:/data
+            - dashboard-src:/code/src
 volumes:
     data:
         driver: local
         driver_opts:
             type: none
             device: $PWD/data
+            o: bind
+    dashboard-src:
+        driver: local
+        driver_opts:
+            type: none
+            device: $PWD/dashboard/src
             o: bind
