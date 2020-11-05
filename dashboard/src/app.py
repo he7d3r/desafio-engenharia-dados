@@ -5,18 +5,32 @@ import pandas as pd
 app = Flask(__name__)
 
 def get_available_states():
+    """
+    Get states codes from DB and return them as a list
+    """
     eng = create_engine('sqlite:////data/trades.db')
     conn = eng.connect()
     query = 'SELECT DISTINCT(SG_UF) FROM uf ORDER BY SG_UF'
     return pd.read_sql(query, conn).iloc[:, 0].values
 
 def get_available_years():
+    """
+    Get the years which are present in the DB and return them as a list
+    """
     eng = create_engine('sqlite:////data/trades.db')
     conn = eng.connect()
     query = 'SELECT DISTINCT(CO_ANO) FROM export ORDER BY CO_ANO'
     return pd.read_sql(query, conn).iloc[:, 0].values
 
 def get_top3(table, state, year):
+    """
+    Get products with the 3 largest FOB values in USD and return them as a dataframe
+
+    Args:
+        table: (str): The kind of trade. One of 'import' or 'export'.
+        state: (str): The UF code of the state of origin/destiny the trade
+        year: (str): The year of the trade
+    """
     eng = create_engine('sqlite:////data/trades.db')
     conn = eng.connect()
     query = '''SELECT NO_NCM_POR item,
@@ -38,6 +52,13 @@ def get_top3(table, state, year):
 @app.route('/dashboard/')
 @app.route('/dashboard/<string:state>/<int:year>')
 def dashboard(state=None, year=None):
+    """
+    Show statistics about imports and exports for the state and year provided in the URL
+
+    Args:
+        state: (str): The UF code of the state of origin/destiny the trade
+        year: (str): The year of the trade
+    """
     available_states = get_available_states()
     if state is None:
         state = str(available_states[0])
