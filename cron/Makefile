@@ -34,5 +34,5 @@ ${TABLES}: /data/%:
 /data/trades.db: ${TABLES} ${IMPORTS} ${EXPORTS}
 	${PYTHON} scripts/createdb.py ${IMPORTS} --db=$@ --table=import && \
 	${PYTHON} scripts/createdb.py ${EXPORTS} --db=$@ --table=export && \
-	${PYTHON} scripts/createdb.py /data/NCM.csv --db=$@ --table=ncm && \
-	${PYTHON} scripts/createdb.py /data/UF.csv --db=$@ --table=uf
+	${PYTHON} scripts/createdb.py /data/NCM.csv --db=$@ --table=ncm --encoding=ISO-8859-1 && \
+	${PYTHON} scripts/createdb.py /data/UF.csv --db=$@ --table=uf --encoding=ISO-8859-1

@@ -11,7 +11,7 @@ docker-compose up -d
 This will start both the cron job and the flask app. You can also start only the web app (e.g. if the data is already downloaded and added to the database, and you don't need the cron job running):
 
 ```bash
-docker-compose up app -d
+docker-compose up -d app
 ```
 
 Alternatively, use Docker to build and run each image as follows:

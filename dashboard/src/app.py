@@ -15,12 +15,12 @@ def get_available_states():
 
 def get_available_years():
     """
-    Get the years which are present in the DB and return them as a list
+    Get the years which are present in the DB and return them as a list of integers
     """
     eng = create_engine('sqlite:////data/trades.db')
     conn = eng.connect()
-    query = 'SELECT DISTINCT(CO_ANO) FROM export ORDER BY CO_ANO'
-    return pd.read_sql(query, conn).iloc[:, 0].values
+    query = 'SELECT DISTINCT(strftime("%Y", DATA)) year FROM export ORDER BY year'
+    return pd.read_sql(query, conn).year.astype(int).values.tolist()
 
 def get_top3(table, state, year):
     """
@@ -35,12 +35,12 @@ def get_top3(table, state, year):
     conn = eng.connect()
     query = '''SELECT NO_NCM_POR item,
     SUM(VL_FOB) total
-    FROM {table}
+    FROM {table} k
     JOIN uf u ON SG_UF_NCM=u.SG_UF
-    JOIN ncm n ON {table}.CO_NCM=n.CO_NCM
-    WHERE CO_ANO={year}
+    JOIN ncm n ON k.CO_NCM=n.CO_NCM
+    WHERE strftime("%Y", DATA)="{year}"
       AND SG_UF_NCM="{state}"
-    GROUP BY {table}.CO_NCM
+    GROUP BY k.CO_NCM
     ORDER BY total DESC
     LIMIT 3
     '''.format(table=table, year=year, state=state)
@@ -56,8 +56,8 @@ def dashboard(state=None, year=None):
     Show statistics about imports and exports for the state and year provided in the URL
 
     Args:
-        state: (str): The UF code of the state of origin/destiny the trade
-        year: (str): The year of the trade
+        state: (str): The UF code of the state of origin/destiny the trade (default the first state available)
+        year: (int): The year of the trade (default the first year available)
     """
     available_states = get_available_states()
     if state is None:
