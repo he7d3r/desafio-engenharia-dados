@@ -2,7 +2,7 @@
 # Setup
 
 ## Quick start
-
+### Using Docker Compose
 After cloning the project, and going to its folder, use Docker Compose to build and run the images as follows:
 ```bash
 docker-compose up -d
@@ -16,7 +16,8 @@ docker-compose up -d app
 
 Alternatively, use Docker to build and run each image as follows:
 
-## Get the data into an SQLite database
+### Using only Docker
+#### Get the data into an SQLite database
 
 To get a container for the cron job, run the following (replacing `<img_name>` with a name of your choice):
 
@@ -33,7 +34,19 @@ You can check the status of the cron service like this:
 docker exec -it <container_id> service cron status
 ```
 
-## Get the Flask app running
+#### Test the database
+
+After making changes to the data pipeline, it can be useful to check if the database still contains the expected data. For this, just run `make tests` inside the `cron` container, that is:
+
+```bash
+docker-compose up -d cron-downloader
+docker exec -it cron /bin/bash
+make tests
+```
+
+This will ensure a reasonable number of rows is present in each table.
+
+#### Get the Flask app running
 
 As above, it is possible to build and run the image without using Docker Compose:
 
@@ -43,3 +56,7 @@ docker run --name <container_name> -d -p 5000:5000 -v `pwd`/data:/data -v `pwd`/
 ```
 
 The app should be be available at http://localhost:5000/. Changes made to app source code (inside the folder `dashboard/src` on the host) go live without needing to rebuild its image (reloading the page in the browser is enough).
+
+## Notes
+
+For a first look into the data, check out the Jupyter notebooks inside the directory `notebooks`.
