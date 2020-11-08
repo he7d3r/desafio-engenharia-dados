@@ -19,7 +19,6 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 
-
 def main(argv=None):
     args = docopt.docopt(__doc__, argv=argv)
     csv_paths = args['<csv-file>']
@@ -29,6 +28,7 @@ def main(argv=None):
 
     run(csv_paths, db_path, table, encoding=encoding)
 
+
 def replace_year_month_by_date(df):
     date_parts = {'CO_ANO': 'year', 'CO_MES': 'month'}
     df['DATA'] = pd.to_datetime(
@@ -37,20 +37,27 @@ def replace_year_month_by_date(df):
     df = df.drop(date_parts.keys(), axis=1)
     return df
 
+
 def run(csv_paths, db_path, table, encoding=None):
     eng = create_engine('sqlite:///{}'.format(db_path))
-    conn = eng.connect()
-    chunk_size=500000
+    chunk_size = 500000
     for csv_path in csv_paths:
         print(f'Processing {csv_path}')
-        for chunk in pd.read_csv(csv_path, delimiter=';', chunksize=chunk_size, encoding=encoding):
+        chunks = pd.read_csv(
+            csv_path,
+            delimiter=';',
+            chunksize=chunk_size,
+            encoding=encoding)
+        for chunk in chunks:
             if table in ['import', 'export']:
                 chunk = replace_year_month_by_date(chunk)
             elif table not in ['ncm', 'uf']:
-                err_msg = f'Unknown value for "table": {table}. Must be one of "import", "export", "ncm" or "uf".'
+                err_msg = (f'Unknown value for "table": {table}. '
+                           'Must be one of "import", "export", "ncm" or "uf".')
                 raise ValueError(err_msg)
             chunk.to_sql(table, eng, if_exists='append', index=False)
     print('Done.')
+
 
 if __name__ == '__main__':
     main()

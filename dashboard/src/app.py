@@ -4,6 +4,7 @@ import pandas as pd
 
 app = Flask(__name__)
 
+
 def get_available_states():
     """
     Get states codes from DB and return them as a list
@@ -13,18 +14,26 @@ def get_available_states():
     query = 'SELECT DISTINCT(SG_UF) FROM uf ORDER BY SG_UF'
     return pd.read_sql(query, conn).iloc[:, 0].values
 
+
 def get_available_years():
     """
-    Get the years which are present in the DB and return them as a list of integers
+    Get the years which are present in the DB and return them as a list of
+    integers.
     """
     eng = create_engine('sqlite:////data/trades.db')
     conn = eng.connect()
-    query = 'SELECT DISTINCT(strftime("%Y", DATA)) year FROM export ORDER BY year'
+    query = '''
+    SELECT DISTINCT(strftime("%Y", DATA)) YEAR
+    FROM export
+    ORDER BY YEAR
+    '''
     return pd.read_sql(query, conn).year.astype(int).values.tolist()
+
 
 def get_top3(table, state, year):
     """
-    Get products with the 3 largest FOB values in USD and return them as a dataframe
+    Get products with the 3 largest FOB values in USD and return them as a
+    dataframe.
 
     Args:
         table: (str): The kind of trade. One of 'import' or 'export'.
@@ -47,17 +56,20 @@ def get_top3(table, state, year):
     df = pd.read_sql(query, conn)
     return df
 
+
 @app.route('/')
 @app.route('/dashboard')
 @app.route('/dashboard/')
 @app.route('/dashboard/<string:state>/<int:year>')
 def dashboard(state=None, year=None):
     """
-    Show statistics about imports and exports for the state and year provided in the URL
+    Show statistics about imports and exports for the state and year provided
+    in the URL.
 
     Args:
-        state: (str): The UF code of the state of origin/destiny the trade (default the first state available)
-        year: (int): The year of the trade (default the first year available)
+        state: (str): The UF code of the state of origin/destiny the trade
+        (default the first state available).
+        year: (int): The year of the trade (default the first year available).
     """
     available_states = get_available_states()
     if state is None:
@@ -78,7 +90,8 @@ def dashboard(state=None, year=None):
                 imports=df_imp,
                 exports=df_exp
             )
-    return f'Parâmetro(s) inválido(s).'
+    return 'Parâmetro(s) inválido(s).'
+
 
 @app.errorhandler(404)
 def page_not_found(e):
