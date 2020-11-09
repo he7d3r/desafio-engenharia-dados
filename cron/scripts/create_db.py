@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-"""Creates an sqlite database with the data from CSV files.
+"""Creates an sqlite database and add data from CSV files.
 
 Usage:
-    createdb <csv-file>... [--db=<path>] [--table=<name>] [--encoding=<code>]
-    createdb -h | --help
+    create_db <csv-file>... [--db=<path>] [--table=<name>] [--encoding=<code>]
+    create_db -h | --help
 
 Options:
     -h --help           Show this screen.
@@ -20,13 +20,18 @@ from sqlalchemy import create_engine
 
 
 def main(argv=None):
+    global engine
+
     args = docopt.docopt(__doc__, argv=argv)
     csv_paths = args['<csv-file>']
+
     db_path = os.path.expanduser(args['--db'])
+    engine = create_engine('sqlite:///{}'.format(db_path))
+
     table = args['--table']
     encoding = args['--encoding']
 
-    run(csv_paths, db_path, table, encoding=encoding)
+    add_full_data(csv_paths, table, encoding=encoding)
 
 
 def replace_year_month_by_date(df, year_col='year', month_col='month',
@@ -56,13 +61,15 @@ def replace_year_month_by_date(df, year_col='year', month_col='month',
     '''
     df[date_col] = pd.to_datetime(
         df[year_col].astype(str) + df[month_col].astype(str), format='%Y%m')
-    assert ((df.DATA.dt.year == df[year_col]).all()
-            and (df.DATA.dt.month == df[month_col]).all())
+    assert ((df[date_col].dt.year == df[year_col]).all()
+            and (df[date_col].dt.month == df[month_col]).all())
     return df.drop([year_col, month_col], axis=1)
 
 
-def run(csv_paths, db_path, table, encoding=None):
-    eng = create_engine('sqlite:///{}'.format(db_path))
+def add_full_data(csv_paths, table, encoding=None):
+    '''
+    Add all data from CSV files to database tables
+    '''
     chunk_size = 500000
     for csv_path in csv_paths:
         print(f'Processing {csv_path}')
@@ -80,7 +87,7 @@ def run(csv_paths, db_path, table, encoding=None):
                 err_msg = (f'Unknown value for "table": {table}. '
                            'Must be one of "import", "export", "ncm" or "uf".')
                 raise ValueError(err_msg)
-            chunk.to_sql(table, eng, if_exists='append', index=False)
+            chunk.to_sql(table, engine, if_exists='append', index=False)
     print('Done.')
 
 

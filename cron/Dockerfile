@@ -11,7 +11,7 @@ WORKDIR /code
 COPY cron/Makefile ./
 # FIXME: Copy only the needed script (add others later)
 COPY cron/scripts ./scripts
-RUN chmod +x ./scripts/createdb.py
+RUN chmod +x ./scripts/*.py
 
 # Install python packages
 COPY cron/requirements.txt ./

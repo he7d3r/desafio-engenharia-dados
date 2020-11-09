@@ -4,15 +4,17 @@ import pandas as pd
 
 app = Flask(__name__)
 
+DATABASE_URI = 'sqlite:////data/trades.db'
+engine = create_engine(DATABASE_URI)
 
-def get_available_states():
+
+def get_available_federative_units():
     """
     Get states codes from DB and return them as a list
     """
-    eng = create_engine('sqlite:////data/trades.db')
-    conn = eng.connect()
-    query = 'SELECT DISTINCT(SG_UF) FROM uf ORDER BY SG_UF'
-    return pd.read_sql(query, conn).iloc[:, 0].values
+    with engine.connect() as connection:
+        query = 'SELECT DISTINCT(SG_UF) FROM uf ORDER BY SG_UF'
+        return pd.read_sql(query, connection).iloc[:, 0].values
 
 
 def get_available_years():
@@ -20,14 +22,13 @@ def get_available_years():
     Get the years which are present in the DB and return them as a list of
     integers.
     """
-    eng = create_engine('sqlite:////data/trades.db')
-    conn = eng.connect()
-    query = '''
-    SELECT DISTINCT(strftime("%Y", DATA)) YEAR
-    FROM export
-    ORDER BY YEAR
-    '''
-    return pd.read_sql(query, conn).year.astype(int).values.tolist()
+    with engine.connect() as connection:
+        query = '''
+        SELECT DISTINCT(strftime("%Y", DATA)) year
+        FROM export
+        ORDER BY year
+        '''
+        return pd.read_sql(query, connection).year.astype(int).values.tolist()
 
 
 def get_top3(table, state, year):
@@ -40,21 +41,21 @@ def get_top3(table, state, year):
         state: (str): The UF code of the state of origin/destiny the trade
         year: (str): The year of the trade
     """
-    eng = create_engine('sqlite:////data/trades.db')
-    conn = eng.connect()
-    query = '''SELECT NO_NCM_POR item,
-    SUM(VL_FOB) total
-    FROM {table} k
-    JOIN uf u ON SG_UF_NCM=u.SG_UF
-    JOIN ncm n ON k.CO_NCM=n.CO_NCM
-    WHERE strftime("%Y", DATA)="{year}"
-      AND SG_UF_NCM="{state}"
-    GROUP BY k.CO_NCM
-    ORDER BY total DESC
-    LIMIT 3
-    '''.format(table=table, year=year, state=state)
-    df = pd.read_sql(query, conn)
-    return df
+    with engine.connect() as connection:
+        query = f'''
+        SELECT n.NO_NCM_POR product_name,
+            t.total
+        FROM top_by_state_and_year t
+        JOIN uf u ON t.federative_unit=u.SG_UF
+        JOIN ncm n ON t.product=n.CO_NCM
+        WHERE t.year="{year}"
+          AND t.federative_unit="{state}"
+          AND t.kind="{table}"
+        GROUP BY t.product
+        ORDER BY t.total DESC
+        LIMIT 3
+        '''
+        return pd.read_sql(query, connection)
 
 
 @app.route('/')
@@ -71,7 +72,7 @@ def dashboard(state=None, year=None):
         (default the first state available).
         year: (int): The year of the trade (default the first year available).
     """
-    available_states = get_available_states()
+    available_states = get_available_federative_units()
     if state is None:
         state = str(available_states[0])
     if state in available_states:

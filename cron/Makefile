@@ -40,10 +40,12 @@ ${TABLES}: /data/%:
 	wget -P /data -Nc -nv "$(BASEURL)/tabelas/$(subst /data/,,$@)"
 
 /data/trades.db: ${TABLES} ${IMPORTS} ${EXPORTS}
-	${PYTHON} scripts/createdb.py ${IMPORTS} --db=$@ --table=import && \
-	${PYTHON} scripts/createdb.py ${EXPORTS} --db=$@ --table=export && \
-	${PYTHON} scripts/createdb.py /data/NCM.csv --db=$@ --table=ncm --encoding=ISO-8859-1 && \
-	${PYTHON} scripts/createdb.py /data/UF.csv --db=$@ --table=uf --encoding=ISO-8859-1
+	${PYTHON} scripts/create_db.py ${IMPORTS} --db=$@ --table=import && \
+	${PYTHON} scripts/create_db.py ${EXPORTS} --db=$@ --table=export && \
+	${PYTHON} scripts/create_db.py /data/NCM.csv --db=$@ --table=ncm --encoding=ISO-8859-1 && \
+	${PYTHON} scripts/create_db.py /data/UF.csv --db=$@ --table=uf --encoding=ISO-8859-1 && \
+	${PYTHON} scripts/add_aggregated_data.py --db=$@ --table=import && \
+	${PYTHON} scripts/add_aggregated_data.py --db=$@ --table=export
 
 tests: test-min-rows-uf \
 	test-min-rows-ncm \
@@ -118,5 +120,36 @@ test-min-distinct-prod-export: /data/trades.db
 		echo "OK: At least $(min_percentage)% of the products from 'ncm' table are present in table 'export'"; \
 	else \
 		echo "ERROR: Less than $(min_percentage)% of the products from 'ncm' table are present in table 'export'"; \
+		exit 1; \
+	fi
+
+# Ensure no group has more than 1 total price
+test-max-total-prices-yearly: /data/trades.db
+	@$(eval multiple_totals=$(shell sql2csv -vH --db "sqlite:///$<" --query="SELECT COUNT(*) FROM (SELECT kind, year, federative_unit, product, COUNT(*) count FROM top_by_state_and_year GROUP BY kind, year, federative_unit, product HAVING count > 1)"))
+	@if [ "$(multiple_totals)" -eq "0" ]; then \
+		echo "OK: There is at most one total price per combination of (kind of transaction, year, federative_unit and product)."; \
+	else \
+		echo "ERROR: Some combination of (kind of transaction, year, federative_unit and product) has more than one total price."; \
+		exit 1; \
+	fi
+
+# Ensure no group has more than 1 total price
+test-max-total-prices-monthly: /data/trades.db
+	@$(eval multiple_totals=$(shell sql2csv -vH --db "sqlite:///$<" --query="SELECT COUNT(*) FROM (SELECT kind, year, month, federative_unit, product, COUNT(*) count FROM top_by_state_and_month GROUP BY kind, year, month, federative_unit, product HAVING count > 1)"))
+	@if [ "$(multiple_totals)" -eq "0" ]; then \
+		echo "OK: There is at most one total price per combination of (kind of transaction, year, month, federative_unit and product)."; \
+	else \
+		echo "ERROR: Some combination of (kind of transaction, year, month, federative_unit and product) has more than one total price."; \
+		exit 1; \
+	fi
+
+# Ensure the number of rows is at least twice the number of Brazilian states (2*26)
+test-min-rows-state_contributions: /data/trades.db
+	@$(eval min_rows=52)
+	@$(eval n_rows=$(shell sql2csv -vH --db "sqlite:///$<" --query="SELECT COUNT(*) FROM state_contributions"))
+	@if [ "$(n_rows)" -ge "$(min_rows)" ]; then \
+		echo "OK: There are at least $(min_rows) rows in table 'state_contributions'"; \
+	else \
+		echo "ERROR: The table 'state_contributions' has $(n_rows) rows but it should have at least $(min_rows)"; \
 		exit 1; \
 	fi
