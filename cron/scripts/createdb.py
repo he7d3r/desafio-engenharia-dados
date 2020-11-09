@@ -29,13 +29,36 @@ def main(argv=None):
     run(csv_paths, db_path, table, encoding=encoding)
 
 
-def replace_year_month_by_date(df):
-    date_parts = {'CO_ANO': 'year', 'CO_MES': 'month'}
-    df['DATA'] = pd.to_datetime(
-        df[date_parts.keys()].assign(day=1).rename(columns=date_parts)
-    )
-    df = df.drop(date_parts.keys(), axis=1)
-    return df
+def replace_year_month_by_date(df, year_col='year', month_col='month',
+                               date_col='date'):
+    '''
+    Replace year and month columns by a date column
+
+    Args:
+        df: (pandas.core.frame.DataFrame): Dataframe containing a year column
+        and a month column.
+            Example:
+                year month ...
+            1   2017     3 ...
+            2   2018    12 ...
+
+        year_col: (str) The name of the column containing the year
+        month_col: (str) The name of the column containing the month
+        date_col: (str) The name of the column which will contain the date
+
+    Returns:
+        df: (pandas.core.frame.DataFrame): Dataframe with a new date column,
+            and without the old year and month columns.
+            Example:
+            ...       date
+            1 ... 2017-03-01
+            2 ... 2018-12-01
+    '''
+    df[date_col] = pd.to_datetime(
+        df[year_col].astype(str) + df[month_col].astype(str), format='%Y%m')
+    assert ((df.DATA.dt.year == df[year_col]).all()
+            and (df.DATA.dt.month == df[month_col]).all())
+    return df.drop([year_col, month_col], axis=1)
 
 
 def run(csv_paths, db_path, table, encoding=None):
@@ -50,7 +73,9 @@ def run(csv_paths, db_path, table, encoding=None):
             encoding=encoding)
         for chunk in chunks:
             if table in ['import', 'export']:
-                chunk = replace_year_month_by_date(chunk)
+                chunk = replace_year_month_by_date(chunk, year_col='CO_ANO',
+                                                   month_col='CO_MES',
+                                                   date_col='DATA')
             elif table not in ['ncm', 'uf']:
                 err_msg = (f'Unknown value for "table": {table}. '
                            'Must be one of "import", "export", "ncm" or "uf".')
