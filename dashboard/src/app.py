@@ -7,6 +7,7 @@ import pandas as pd
 import io
 import base64
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -45,32 +46,78 @@ def get_available_years():
         return pd.read_sql(query, connection).year.astype(int).values.tolist()
 
 
-def get_top(table, state, year, count=3):
+def get_month_name(month):
+    """
+    Get the month name in Portuguese.
+
+    Parameters:
+        month: (int): The month number from 1 to 12
+
+    Returns:
+        name: (str): The name of the month in Portuguese, or
+        'todos os meses' (all months) if month is None
+    """
+    names = {
+        1: 'janeiro', 2: 'fevereiro', 3: 'março', 4: 'abril',
+        5: 'maio', 6: 'junho', 7: 'julho', 8: 'agosto',
+        9: 'setembro', 10: 'outubro', 11: 'novembro', 12: 'dezembro'
+    }
+    if month in names:
+        return names[month]
+    elif month is None:
+        return 'todos os meses'
+
+
+def get_month_options(year):
+    """
+    Get the month options for the given year.
+
+    For the last year, there is data available for each individual month.
+    However, for previous years only the aggregate statistics is available.
+
+    Parameters:
+        year: (int): The year for which the months will be listed.
+    """
+    last_year = datetime.now().year - 1
+    if year == last_year:
+        return list(range(1, 13))
+    else:
+        return []
+
+
+def get_top(kind, state, year, month, count=3):
     """
     Get products with the largest FOB values in USD and return them as a
     dataframe.
 
     Parameters:
-        table: (str): The kind of trade. One of 'import' or 'export'.
+        kind: (str): The kind of trade. One of 'import' or 'export'.
         state: (str): The UF code of the state of origin/destiny the trade
         year: (str): The year of the trade
         count: (int): How many items to get
     """
+    if month:
+        table = 'top_by_state_and_month'
+        period_filter = f't.year="{year}" AND t.month="{month}"'
+    else:
+        table = 'top_by_state_and_year'
+        period_filter = f't.year="{year}"'
+
+    query = f'''
+    SELECT n.NO_NCM_POR product_name,
+        u.NO_UF federative_unit_name,
+        t.total
+    FROM {table} t
+    JOIN uf u ON t.federative_unit=u.SG_UF
+    JOIN ncm n ON t.product=n.CO_NCM
+    WHERE {period_filter}
+        AND t.federative_unit="{state}"
+        AND t.kind="{kind}"
+    GROUP BY t.product
+    ORDER BY t.total
+    LIMIT {count}
+    '''
     with engine.connect() as connection:
-        query = f'''
-        SELECT n.NO_NCM_POR product_name,
-            u.NO_UF federative_unit_name,
-            t.total
-        FROM top_by_state_and_year t
-        JOIN uf u ON t.federative_unit=u.SG_UF
-        JOIN ncm n ON t.product=n.CO_NCM
-        WHERE t.year="{year}"
-          AND t.federative_unit="{state}"
-          AND t.kind="{table}"
-        GROUP BY t.product
-        ORDER BY t.total
-        LIMIT {count}
-        '''
         return pd.read_sql(query, connection)
 
 
@@ -130,7 +177,8 @@ def get_plot(df, title=None):
 @app.route('/dashboard')
 @app.route('/dashboard/')
 @app.route('/dashboard/<string:state_code>/<int:year>')
-def dashboard(state_code=None, year=None):
+@app.route('/dashboard/<string:state_code>/<int:year>/<int:month>')
+def dashboard(state_code=None, year=None, month=None):
     """
     Show statistics about imports and exports for the state and year provided
     in the URL.
@@ -149,22 +197,32 @@ def dashboard(state_code=None, year=None):
         if year is None:
             year = available_years[0]
         if year in available_years:
-            df_imp = get_top('import', state_code, year)
-            df_exp = get_top('export', state_code, year)
+            month_options = get_month_options(year)
+
+            if month_options and month in month_options:
+                month_name = get_month_name(month)
+            else:
+                month = None
+                month_name = 'todos os meses'
+            group = f'({state_name}, {month_name} de {year})'
             img_imports = get_plot(
-                df_imp,
-                title=f'Produtos mais importados ({state_name}, {year})'
+                get_top('import', state_code, year, month),
+                title=f'Produtos mais importados {group}'
             )
             img_exports = get_plot(
-                df_exp,
-                title=f'Produtos mais exportados ({state_name}, {year})'
+                get_top('export', state_code, year, month),
+                title=f'Produtos mais exportados {group}'
             )
             return render_template(
                 'dashboard.html',
-                state_code=state_code,
-                year=year,
+                month_options=[None] + month_options,
+                month=month,
+                get_month_name=get_month_name,
                 available_years=available_years,
+                year=year,
+                last_year=datetime.now().year - 1,
                 available_states=available_states,
+                state_code=state_code,
                 img_imports=img_imports,
                 img_exports=img_exports
             )

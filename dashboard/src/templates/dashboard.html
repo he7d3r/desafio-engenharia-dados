@@ -1,19 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Navegação</h2>
-<p>Selecione o ano e o estado nos menus a seguir:</p>
-<div id="header">
-    <b>Ano</b>
-    <select name="form-year" onchange="location = this.value;console.log(this.value);">
+<p>Selecione um período e uma localização nos menus a seguir. Para o ano de {{last_year}} estão disponívels estatísticas mensais, mas para os demais anos, apenas estatísticas anuais.</p>
+<div id="date">
+    <b>Período:</b>
+    <select name="form-month" onchange="location = this.value;">
+      {% for choice in month_options %}
+          <option value="{{ url_for('dashboard', state_code=state_code, year=year, month=choice) }}" {% if month==choice %} selected="selected"{% endif %}>{{ get_month_name(choice).capitalize() }}</option>
+      {% endfor %}
+    </select>
+    <select name="form-year" onchange="location = this.value;">
       {% for choice in available_years %}
           <option value="{{ url_for('dashboard', state_code=state_code, year=choice) }}" {% if year==choice %} selected="selected"{% endif %}>{{ choice }}</option>
       {% endfor %}
-    </select>    
+    </select>
 </div>
 
-<div id="sidebar">    
+<div id="location">    
     <b>Estado</b>
-    <select name="form-state" onchange="location = this.value;console.log(this.value);">
+    <select name="form-state" onchange="location = this.value;">
       {% for choice in available_states.index %}
           <option value="{{ url_for('dashboard', state_code=choice, year=year) }}" {% if state_code==choice %} selected="selected"{% endif %}>{{ available_states['name'][choice] }}</option>
       {% endfor %}
@@ -22,7 +27,7 @@
 {% if state is not none and year is not none %}
 
 <h2>Estatísticas</h2>
-<p>Os dados a seguir se referem às importações e exportações no ano de <b>{{year}}</b> no estado <b>{{available_states['name'][state_code]}}</b>:</p>
+<p>Os dados a seguir se referem às importações e exportações de {{ get_month_name(month)}} do ano de {{year}} no estado {{available_states['name'][state_code]}}:</p>
 
 <h3>Importações</h3>
 <img src={{ img_imports }} alt="Gráfico de barras das importações" />
