@@ -24,10 +24,10 @@
 <p>Os dados a seguir se referem às importações e exportações no ano de <b>{{year}}</b> no estado <b>{{state}}</b>:</p>
 
 <h3>Importações</h3>
-{{imports.to_html(index=False) | safe}}
+<img src={{ img_imports }} alt="Gráfico de barras das importações" />
 
 <h3>Exportações</h3>
-{{exports.to_html(index=False) | safe}}
+<img src={{ img_exports }} alt="Gráfico de barras das exportações" />
 
 {% endif %}
 {% endblock %}

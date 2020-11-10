@@ -39,7 +39,7 @@ def replace_year_month_by_date(df, year_col='year', month_col='month',
     '''
     Replace year and month columns by a date column
 
-    Args:
+    Parameters:
         df: (pandas.core.frame.DataFrame): Dataframe containing a year column
         and a month column.
             Example:
