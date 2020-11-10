@@ -16,11 +16,19 @@ engine = create_engine(DATABASE_URI)
 
 def get_available_federative_units():
     """
-    Get states codes from DB and return them as a list
+    Get states' codes and names from DB and return them as a dataframe
     """
     with engine.connect() as connection:
-        query = 'SELECT DISTINCT(SG_UF) FROM uf ORDER BY SG_UF'
-        return pd.read_sql(query, connection).iloc[:, 0].values
+        query = '''
+        SELECT DISTINCT(SG_UF) code,
+               NO_UF name
+        FROM uf
+        WHERE code IN ("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO",
+                       "MA", "MT", "MS", "MG", "PR", "PB", "PA", "PE", "PI",
+                       "RN", "RS", "RJ", "RO", "RR", "SC", "SE", "SP", "TO")
+        ORDER BY name
+        '''
+        return pd.read_sql(query, connection, index_col='code')
 
 
 def get_available_years():
@@ -51,6 +59,7 @@ def get_top(table, state, year, count=3):
     with engine.connect() as connection:
         query = f'''
         SELECT n.NO_NCM_POR product_name,
+            u.NO_UF federative_unit_name,
             t.total
         FROM top_by_state_and_year t
         JOIN uf u ON t.federative_unit=u.SG_UF
@@ -59,7 +68,7 @@ def get_top(table, state, year, count=3):
           AND t.federative_unit="{state}"
           AND t.kind="{table}"
         GROUP BY t.product
-        ORDER BY t.total DESC
+        ORDER BY t.total
         LIMIT {count}
         '''
         return pd.read_sql(query, connection)
@@ -105,7 +114,6 @@ def get_plot(df, title=None):
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(large_num_formatter))
 
     plt.tight_layout()
-    # plt.show()
     png_image = io.BytesIO()
     canvas = FigureCanvasAgg(fig)
     canvas.print_png(png_image)
@@ -121,37 +129,42 @@ def get_plot(df, title=None):
 @app.route('/')
 @app.route('/dashboard')
 @app.route('/dashboard/')
-@app.route('/dashboard/<string:state>/<int:year>')
-def dashboard(state=None, year=None):
+@app.route('/dashboard/<string:state_code>/<int:year>')
+def dashboard(state_code=None, year=None):
     """
     Show statistics about imports and exports for the state and year provided
     in the URL.
 
     Parameters:
-        state: (str): The UF code of the state of origin/destiny the trade
+        state_code: (str): The code of the state of origin/destiny the trade
         (default the first state available).
         year: (int): The year of the trade (default the first year available).
     """
     available_states = get_available_federative_units()
-    if state is None:
-        state = str(available_states[0])
-    if state in available_states:
+    if state_code is None:
+        state_code = str(available_states.index[0])
+    if state_code in available_states.index:
+        state_name = available_states['name'][state_code]
         available_years = get_available_years()
         if year is None:
             year = available_years[0]
         if year in available_years:
-            df_imp = get_top('import', state, year)
-            df_exp = get_top('export', state, year)
-            img_imports = get_plot(df_imp, title='Produtos mais importados')
-            img_exports = get_plot(df_exp, title='Produtos mais exportados')
+            df_imp = get_top('import', state_code, year)
+            df_exp = get_top('export', state_code, year)
+            img_imports = get_plot(
+                df_imp,
+                title=f'Produtos mais importados ({state_name}, {year})'
+            )
+            img_exports = get_plot(
+                df_exp,
+                title=f'Produtos mais exportados ({state_name}, {year})'
+            )
             return render_template(
                 'dashboard.html',
-                state=state,
+                state_code=state_code,
                 year=year,
-                years=available_years,
-                states=available_states,
-                imports=df_imp,
-                exports=df_exp,
+                available_years=available_years,
+                available_states=available_states,
                 img_imports=img_imports,
                 img_exports=img_exports
             )

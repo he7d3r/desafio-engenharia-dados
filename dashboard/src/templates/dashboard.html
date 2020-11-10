@@ -5,23 +5,24 @@
 <div id="header">
     <b>Ano</b>
     <select name="form-year" onchange="location = this.value;console.log(this.value);">
-      {% for choice in years %}
-          <option value="{{ url_for('dashboard', state=state, year=choice) }}" {% if year==choice %} selected="selected"{% endif %}>{{ choice }}</option>
+      {% for choice in available_years %}
+          <option value="{{ url_for('dashboard', state_code=state_code, year=choice) }}" {% if year==choice %} selected="selected"{% endif %}>{{ choice }}</option>
       {% endfor %}
     </select>    
 </div>
+
 <div id="sidebar">    
     <b>Estado</b>
     <select name="form-state" onchange="location = this.value;console.log(this.value);">
-      {% for choice in states %}
-          <option value="{{ url_for('dashboard', state=choice, year=year) }}" {% if state==choice %} selected="selected"{% endif %}>{{ choice }}</option>
+      {% for choice in available_states.index %}
+          <option value="{{ url_for('dashboard', state_code=choice, year=year) }}" {% if state_code==choice %} selected="selected"{% endif %}>{{ available_states['name'][choice] }}</option>
       {% endfor %}
     </select>    
 </div>
 {% if state is not none and year is not none %}
 
 <h2>Estatísticas</h2>
-<p>Os dados a seguir se referem às importações e exportações no ano de <b>{{year}}</b> no estado <b>{{state}}</b>:</p>
+<p>Os dados a seguir se referem às importações e exportações no ano de <b>{{year}}</b> no estado <b>{{available_states['name'][state_code]}}</b>:</p>
 
 <h3>Importações</h3>
 <img src={{ img_imports }} alt="Gráfico de barras das importações" />
