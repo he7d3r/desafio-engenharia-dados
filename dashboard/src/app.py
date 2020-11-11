@@ -72,20 +72,20 @@ def get_month_options(year):
     """
     Get the month options for the given year.
 
-    For the last year, there is data available for each individual month.
+    For the previous year, there is data available for each individual month.
     However, for previous years only the aggregate statistics is available.
 
     Parameters:
         year: (int): The year for which the months will be listed.
     """
-    last_year = datetime.now().year - 1
-    if year == last_year:
+    previous_year = datetime.now().year - 1
+    if year == previous_year:
         return list(range(1, 13))
     else:
         return []
 
 
-def get_top(kind, state, year, month, count=3):
+def get_top_products(kind, state, year, month, count=3  ):
     """
     Get products with the largest FOB values in USD and return them as a
     dataframe.
@@ -94,7 +94,7 @@ def get_top(kind, state, year, month, count=3):
         kind: (str): The kind of trade. One of 'import' or 'export'.
         state: (str): The UF code of the state of origin/destiny the trade
         year: (str): The year of the trade
-        count: (int): How many items to get
+        count: (int): How many products to get
     """
     if month:
         table = 'top_by_state_and_month'
@@ -118,7 +118,31 @@ def get_top(kind, state, year, month, count=3):
     LIMIT {count}
     '''
     with engine.connect() as connection:
-        return pd.read_sql(query, connection)
+        return pd.read_sql(query, connection).sort_values('total')
+
+
+def get_top_contributions(kind, year, count=3):
+    """
+    Get states with largest contributions to the yearly total and return them
+    as a dataframe.
+
+    Parameters:
+        kind: (str): The kind of trade. One of 'import' or 'export'.
+        year: (str): The year of the trades
+        count: (int): How many states to get
+    """
+
+    query = f'''
+    SELECT federative_unit, u.NO_UF name, total, percentage
+    FROM state_contributions s
+    JOIN uf u ON s.federative_unit=u.SG_UF
+    WHERE year = "{year}"
+      AND kind = "{kind}"
+    ORDER BY percentage DESC
+    LIMIT {count}
+    '''
+    with engine.connect() as connection:
+        return pd.read_sql(query, connection).sort_values('percentage')
 
 
 def large_num_formatter(num, pos=None):
@@ -136,27 +160,30 @@ def large_num_formatter(num, pos=None):
     return "%.1f %s" % (num, 'Tri.')
 
 
-def get_plot(df, title=None):
+def get_plot(df, column='product_name', ylabel='Produto', title=None):
     """
     Make a horizontal bar plot of the dataframe.
 
     Parameters:
         df: (pandas.core.frame.DataFrame): Dataframe to be plotted
+        column: (str): The column containing the names of interest
         title: (str): Text to be used as title for the plot
     """
-    fig, ax = plt.subplots(figsize=(10, 4))
+    fig, ax = plt.subplots(figsize=(10, len(df)*0.5 + 1.5))
 
-    df.set_index('product_name').plot(kind='barh', ax=ax, legend=False)
+    df.set_index(column).plot(kind='barh', ax=ax, legend=False)
+    for container in ax.containers:
+        plt.setp(container, height=0.5)
     for i, v in enumerate(df['total']):
         ax.text(v, i, str(large_num_formatter(v)), color='blue', va='center',
                 fontweight='bold')
 
     if title:
         ax.set_title(title)
-    ax.set_ylabel('Produto')
-    plt.xlabel('Valor total anual (US$)')
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel('Valor total anual (US$)')
 
-    ax.set_yticklabels([fill(p, 50) for p in df['product_name']])
+    ax.set_yticklabels([fill(p, 50) for p in df[column]])
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(large_num_formatter))
 
     plt.tight_layout()
@@ -187,6 +214,7 @@ def dashboard(state_code=None, year=None, month=None):
         (default the first state available).
         year: (int): The year of the trade (default the first year available).
     """
+    previous_year = datetime.now().year - 1
     available_states = get_available_federative_units()
     if state_code is None:
         state_code = str(available_states.index[0])
@@ -194,7 +222,7 @@ def dashboard(state_code=None, year=None, month=None):
         state_name = available_states['name'][state_code]
         available_years = get_available_years()
         if year is None:
-            year = available_years[0]
+            year = previous_year
         if year in available_years:
             month_options = get_month_options(year)
 
@@ -203,13 +231,34 @@ def dashboard(state_code=None, year=None, month=None):
             else:
                 month = None
                 month_name = 'todos os meses'
+
+            if month is None and year == previous_year:
+                group = f'({year})'
+                img_top_importers = get_plot(
+                    get_top_contributions('import', year),
+                    column='name',
+                    ylabel='Estado',
+                    title=f'Maiores importadores {group}'
+                )
+                img_top_exporters = get_plot(
+                    get_top_contributions('export', year),
+                    column='name',
+                    ylabel='Estado',
+                    title=f'Maiores exportadores {group}'
+                )
+            else:
+                img_top_importers = None
+                img_top_exporters = None
+
             group = f'({state_name}, {month_name} de {year})'
-            img_imports = get_plot(
-                get_top('import', state_code, year, month),
+            img_top_imports = get_plot(
+                get_top_products('import', state_code, year, month),
+                ylabel='Produto',
                 title=f'Produtos mais importados {group}'
             )
-            img_exports = get_plot(
-                get_top('export', state_code, year, month),
+            img_top_exports = get_plot(
+                get_top_products('export', state_code, year, month),
+                ylabel='Produto',
                 title=f'Produtos mais exportados {group}'
             )
             return render_template(
@@ -219,11 +268,13 @@ def dashboard(state_code=None, year=None, month=None):
                 get_month_name=get_month_name,
                 available_years=available_years,
                 year=year,
-                last_year=datetime.now().year - 1,
+                previous_year=previous_year,
                 available_states=available_states,
                 state_code=state_code,
-                img_imports=img_imports,
-                img_exports=img_exports
+                img_top_imports=img_top_imports,
+                img_top_exports=img_top_exports,
+                img_top_importers=img_top_importers,
+                img_top_exporters=img_top_exporters
             )
     return 'Parâmetro(s) inválido(s).'
 

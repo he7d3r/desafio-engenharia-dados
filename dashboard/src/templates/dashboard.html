@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Navegação</h2>
-<p>Selecione um período e uma localização nos menus a seguir. Para o ano de {{last_year}} estão disponívels estatísticas mensais, mas para os demais anos, apenas estatísticas anuais.</p>
+<p>Selecione um período e uma localização nos menus a seguir. Para o ano de {{previous_year}} estão disponívels estatísticas mensais, mas para os demais anos, apenas estatísticas anuais.</p>
 <div id="date">
     <b>Período:</b>
     <select name="form-month" onchange="location = this.value;">
@@ -24,16 +24,25 @@
       {% endfor %}
     </select>    
 </div>
-{% if state is not none and year is not none %}
 
-<h2>Estatísticas</h2>
-<p>Os dados a seguir se referem às importações e exportações de {{ get_month_name(month)}} do ano de {{year}} no estado {{available_states['name'][state_code]}}:</p>
+{% if img_top_importers is not none and img_top_exporters is not none %}
+<h2>Estatísticas nacionais</h2>
+<p>Os dados a seguir se referem aos totais de importação e exportação no Brasil, ao longo de todo o ano:</p>
 
 <h3>Importações</h3>
-<img src={{ img_imports }} alt="Gráfico de barras das importações" />
+<img src={{ img_top_importers }} alt="Gráfico de barras dos maiores importadores" />
 
 <h3>Exportações</h3>
-<img src={{ img_exports }} alt="Gráfico de barras das exportações" />
-
+<img src={{ img_top_exporters }} alt="Gráfico de barras dos maiores exportadores" />
 {% endif %}
+
+<h2>Estatísticas estaduais</h2>
+<p>Os dados a seguir se referem às importações e exportações no estado, em {{ get_month_name(month)}} do ano de {{year}}:</p>
+
+<h3>Importações</h3>
+<img src={{ img_top_imports }} alt="Gráfico de barras dos produtos mais importados" />
+
+<h3>Exportações</h3>
+<img src={{ img_top_exports }} alt="Gráfico de barras dos produtos mais exportados" />
+
 {% endblock %}
