@@ -41,8 +41,13 @@
 
 <h3>Importações</h3>
 <img src={{ img_top_imports }} alt="Gráfico de barras dos produtos mais importados" />
-
+{% if img_contribution_to_imports is not none %}
+<img src={{ img_contribution_to_imports }} alt="Gráfico da contribuição do estado para o total de importações do país" />
+{% endif %}
 <h3>Exportações</h3>
 <img src={{ img_top_exports }} alt="Gráfico de barras dos produtos mais exportados" />
+{% if img_contribution_to_imports is not none %}
+<img src={{ img_contribution_to_exports }} alt="Gráfico da contribuição do estado para o total de importações do país" />
+{% endif %}
 
 {% endblock %}

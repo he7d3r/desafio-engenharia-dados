@@ -85,7 +85,7 @@ def get_month_options(year):
         return []
 
 
-def get_top_products(kind, state, year, month, count=3  ):
+def get_top_products(kind, state, year, month, count=3, index=None):
     """
     Get products with the largest FOB values in USD and return them as a
     dataframe.
@@ -118,10 +118,11 @@ def get_top_products(kind, state, year, month, count=3  ):
     LIMIT {count}
     '''
     with engine.connect() as connection:
-        return pd.read_sql(query, connection).sort_values('total')
+        return pd.read_sql(query, connection, index_col=index)\
+                .sort_values('total')
 
 
-def get_top_contributions(kind, year, count=3):
+def get_top_contributions(kind, year, limit=3, index=None):
     """
     Get states with largest contributions to the yearly total and return them
     as a dataframe.
@@ -129,20 +130,25 @@ def get_top_contributions(kind, year, count=3):
     Parameters:
         kind: (str): The kind of trade. One of 'import' or 'export'.
         year: (str): The year of the trades
-        count: (int): How many states to get
+        limit: (int): Limit the results to this many states.
     """
+    limit = f'LIMIT {limit}' if limit is not None else ''
 
     query = f'''
-    SELECT federative_unit, u.NO_UF name, total, percentage
+    SELECT federative_unit,
+           u.NO_UF name,
+           total,
+           percentage
     FROM state_contributions s
     JOIN uf u ON s.federative_unit=u.SG_UF
     WHERE year = "{year}"
       AND kind = "{kind}"
     ORDER BY percentage DESC
-    LIMIT {count}
+    {limit}
     '''
     with engine.connect() as connection:
-        return pd.read_sql(query, connection).sort_values('percentage')
+        return pd.read_sql(query, connection, index_col=index)\
+                .sort_values('total')
 
 
 def large_num_formatter(num, pos=None):
@@ -160,18 +166,65 @@ def large_num_formatter(num, pos=None):
     return "%.1f %s" % (num, 'Tri.')
 
 
-def get_plot(df, column='product_name', ylabel='Produto', title=None):
+def get_contribution_plot(df, state, title=None):
+    """
+    Make a pie chart of the percentage of contribution of each state
+
+    Parameters:
+        df: (pandas.core.frame.DataFrame): Dataframe to be plotted
+        state: (str): The code of the state
+    """
+    threshold = 3
+
+    def pct_format(percent, skip_small_values=True):
+        if percent <= threshold and skip_small_values:
+            return ''
+        else:
+            return '%1.1f%%' % percent
+
+    # Highlight the current state
+    explode = [0.03 if code != state else 0.2 for code in df.federative_unit]
+    colors = ['#CCC' if code != state else '#66F'
+              for code in df.federative_unit]
+
+    # Hide the percentages of small contributions, unless it is for the
+    # current state. In that case, show it as part of the label, since it would
+    # not fit inside its slice.
+    labels = [name if df['percentage'][name] > threshold else
+              name + ' ({})'.format(
+                  pct_format(df['percentage'][name],
+                             skip_small_values=False)
+                            ) if df['federative_unit'][name] == state
+              else '' for name in df.index]
+
+    fig, ax = plt.subplots()
+    ax.pie(df.total, colors=colors, autopct=pct_format, startangle=90,
+           explode=explode, labels=labels)
+    if title:
+        ax.set_title(title, pad=20)
+    plt.tight_layout()
+    png_image = io.BytesIO()
+    canvas = FigureCanvasAgg(fig)
+    canvas.print_png(png_image)
+
+    png_image_in_base_64 = 'data:image/png;base64,{}'.format(
+        base64.b64encode(png_image.getvalue()).decode('utf8')
+    )
+
+    return png_image_in_base_64
+
+
+def get_plot(df, ylabel='Produto', title=None):
     """
     Make a horizontal bar plot of the dataframe.
 
     Parameters:
         df: (pandas.core.frame.DataFrame): Dataframe to be plotted
-        column: (str): The column containing the names of interest
         title: (str): Text to be used as title for the plot
     """
     fig, ax = plt.subplots(figsize=(10, len(df)*0.5 + 1.5))
 
-    df.set_index(column).plot(kind='barh', ax=ax, legend=False)
+    df.plot(kind='barh', ax=ax, legend=False)
     for container in ax.containers:
         plt.setp(container, height=0.5)
     for i, v in enumerate(df['total']):
@@ -183,7 +236,7 @@ def get_plot(df, column='product_name', ylabel='Produto', title=None):
     ax.set_ylabel(ylabel)
     ax.set_xlabel('Valor total anual (US$)')
 
-    ax.set_yticklabels([fill(p, 50) for p in df[column]])
+    ax.set_yticklabels([fill(p, 50) for p in df.index])
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(large_num_formatter))
 
     plt.tight_layout()
@@ -195,7 +248,6 @@ def get_plot(df, column='product_name', ylabel='Produto', title=None):
         base64.b64encode(png_image.getvalue()).decode('utf8')
     )
 
-    # Response(png_image.getvalue(), mimetype='image/png')
     return png_image_in_base_64
 
 
@@ -235,29 +287,45 @@ def dashboard(state_code=None, year=None, month=None):
             if month is None and year == previous_year:
                 group = f'({year})'
                 img_top_importers = get_plot(
-                    get_top_contributions('import', year),
-                    column='name',
+                    get_top_contributions('import', year, index='name'),
                     ylabel='Estado',
                     title=f'Maiores importadores {group}'
                 )
                 img_top_exporters = get_plot(
-                    get_top_contributions('export', year),
-                    column='name',
+                    get_top_contributions('export', year, index='name'),
                     ylabel='Estado',
                     title=f'Maiores exportadores {group}'
+                )
+                img_contribution_to_imports = get_contribution_plot(
+                    get_top_contributions('import', year, limit=None,
+                                          index='name'),
+                    state=state_code,
+                    title='Representatividade das importações do estado no'
+                    + ' ano\nem relação ao total de importações do país'
+                )
+                img_contribution_to_exports = get_contribution_plot(
+                    get_top_contributions('export', year, limit=None,
+                                          index='name'),
+                    state=state_code,
+                    title='Representatividade das exportações do estado no'
+                    + ' ano\nem relação ao total de exportações do país'
                 )
             else:
                 img_top_importers = None
                 img_top_exporters = None
+                img_contribution_to_imports = None
+                img_contribution_to_exports = None
 
             group = f'({state_name}, {month_name} de {year})'
             img_top_imports = get_plot(
-                get_top_products('import', state_code, year, month),
+                get_top_products('import', state_code, year, month,
+                                 index='product_name'),
                 ylabel='Produto',
                 title=f'Produtos mais importados {group}'
             )
             img_top_exports = get_plot(
-                get_top_products('export', state_code, year, month),
+                get_top_products('export', state_code, year, month,
+                                 index='product_name'),
                 ylabel='Produto',
                 title=f'Produtos mais exportados {group}'
             )
@@ -274,7 +342,9 @@ def dashboard(state_code=None, year=None, month=None):
                 img_top_imports=img_top_imports,
                 img_top_exports=img_top_exports,
                 img_top_importers=img_top_importers,
-                img_top_exporters=img_top_exporters
+                img_top_exporters=img_top_exporters,
+                img_contribution_to_imports=img_contribution_to_imports,
+                img_contribution_to_exports=img_contribution_to_exports
             )
     return 'Parâmetro(s) inválido(s).'
 
