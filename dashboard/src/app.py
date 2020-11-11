@@ -146,8 +146,7 @@ def get_plot(df, title=None):
     """
     fig, ax = plt.subplots(figsize=(10, 4))
 
-    df.set_index('product_name').plot(kind='barh', ax=ax)
-    ax.legend(['Valor'])
+    df.set_index('product_name').plot(kind='barh', ax=ax, legend=False)
     for i, v in enumerate(df['total']):
         ax.text(v, i, str(large_num_formatter(v)), color='blue', va='center',
                 fontweight='bold')
