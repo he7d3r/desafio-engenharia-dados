@@ -8,11 +8,12 @@ import io
 import base64
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 
-DATABASE_URI = 'sqlite:////data/trades.db'
-engine = create_engine(DATABASE_URI)
+DATABASE_URL = os.environ.get('DATABASE_URL')
+engine = create_engine(DATABASE_URL)
 
 
 def get_available_federative_units():

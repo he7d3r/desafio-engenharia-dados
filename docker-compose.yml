@@ -17,6 +17,7 @@ services:
         environment:
             - FLASK_APP=src/app.py
             - FLASK_ENV=${FLASK_ENV:-production}
+            - DATABASE_URL=${DATABASE_URL:-sqlite:////data/trades.db}
         volumes:
             - data:/data
             - dashboard-src:/code/src
