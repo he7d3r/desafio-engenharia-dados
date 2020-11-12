@@ -14,9 +14,24 @@ This will start both the cron job and the flask app. You can also start only the
 docker-compose up -d app
 ```
 
-Alternatively, use Docker to build and run each image as follows:
+You can also enable Flask's debug mode by setting a environment variable like this:
+
+```bash
+FLASK_ENV=development docker-compose up -d app
+```
+
+or by adding the same setting to a `.env` file:
+
+```bash
+echo "FLASK_ENV=development" >> .env
+```
+
+To disable it again, just replace `development` by `production`.
 
 ### Using only Docker
+
+As an alternative to the previous commands, it is also possible to build and run each image as follows.
+
 #### Get the data into an SQLite database
 
 To get a container for the cron job, run the following (replacing `<img_name>` with a name of your choice):
