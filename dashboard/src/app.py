@@ -269,7 +269,11 @@ def dashboard(state_code=None, year=None, month=None):
     previous_year = datetime.now().year - 1
     available_states = get_available_federative_units()
     if state_code is None:
-        state_code = str(available_states.index[0])
+        # Use a large state as default
+        if 'SP' in available_states.index:
+            state_code = 'SP'
+        else:
+            state_code = str(available_states.index[0])
     if state_code in available_states.index:
         state_name = available_states['name'][state_code]
         available_years = get_available_years()
