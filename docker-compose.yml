@@ -15,6 +15,7 @@ services:
         ports:
             - '5000:5000'
         environment:
+            - FLASK_APP=src/app.py
             - FLASK_ENV=${FLASK_ENV:-production}
         volumes:
             - data:/data
