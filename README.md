@@ -67,10 +67,17 @@ As above, it is possible to build and run the image without using Docker Compose
 
 ```shell
 docker build -f dashboard/Dockerfile -t <img_name> .
-docker run --name <container_name> -d -p 5000:5000 -v `pwd`/data:/data -v `pwd`/dashboard/src:/code/src <img_name>
+docker run -d -e FLASK_APP='src/app.py' \
+    -e FLASK_ENV='development' \
+    -e DATABASE_URL='sqlite:////data/trades.db' \
+    -p 5000:5000 \
+    -v `pwd`/data:/data \
+    -v `pwd`/dashboard/src:/code/src \
+    --name <container_name> <img_name> \
+    gunicorn --reload --bind 0.0.0.0:5000 --workers 4 "src.app:create_app()"
 ```
 
-The app should be be available at http://localhost:5000/. Changes made to app source code (inside the folder `dashboard/src` on the host) go live without needing to rebuild its image (reloading the page in the browser is enough).
+The app should be be available at http://localhost:5000/. The option `--reload` allows changes made to app source code (inside the folder `dashboard/src` on the host) to go live without needing to rebuild its image (reloading the page in the browser is enough).
 
 ## Notes
 
