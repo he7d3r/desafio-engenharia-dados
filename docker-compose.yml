@@ -1,5 +1,15 @@
 version: '3.8'
 services:
+    nginx:
+        build: ./nginx
+        container_name: nginx
+        restart: always
+        ports:
+            - 80:80
+        networks:
+            - dashboard-net
+        depends_on:
+            - app
     cron-downloader:
         container_name: cron
         build:
@@ -14,8 +24,6 @@ services:
             dockerfile: dashboard/Dockerfile
 
         command: gunicorn --reload --bind 0.0.0.0:5000 --workers 4 "src.app:create_app()"
-        ports:
-            - '5000:5000'
         environment:
             - FLASK_APP=src/app.py
             - FLASK_ENV=${FLASK_ENV:-production}
@@ -23,6 +31,10 @@ services:
         volumes:
             - data:/data
             - dashboard-src:/code/src
+        networks:
+            dashboard-net:
+                aliases:
+                    - flask-dashboard
 volumes:
     data:
         driver: local
@@ -36,3 +48,5 @@ volumes:
             type: none
             device: $PWD/dashboard/src
             o: bind
+networks:
+    dashboard-net:

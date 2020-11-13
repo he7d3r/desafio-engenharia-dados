@@ -8,10 +8,10 @@ After cloning the project, and going to its folder, use Docker Compose to build 
 docker-compose up -d
 ```
 
-This will start both the cron job and the flask app. You can also start only the web app (e.g. if the data is already downloaded and added to the database, and you don't need the cron job running):
+This will start the cron job, the flask app and the nginx. If you already downloaded and added to the database, and you don't need the cron job running, it is possible to skip the cron service:
 
 ```bash
-docker-compose up -d app
+docker-compose up -d nginx
 ```
 
 You can also enable Flask's debug mode by setting a environment variable like this:
