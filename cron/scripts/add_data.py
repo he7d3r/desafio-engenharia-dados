@@ -3,8 +3,8 @@
 """Creates an sqlite database and add data from CSV files.
 
 Usage:
-    create_db <csv-file>... [--db=<path>] [--table=<name>] [--encoding=<code>]
-    create_db -h | --help
+    add_data <csv-file>... [--db=<path>] [--table=<name>] [--encoding=<code>]
+    add_data -h | --help
 
 Options:
     -h --help           Show this screen.
