@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Creates an sqlite database and add data from CSV files.
+"""Add data from CSV files to the sqlite database.
 
 Usage:
     add_data <csv-file>... [--db=<path>] [--table=<name>] [--encoding=<code>]
@@ -66,6 +66,24 @@ def replace_year_month_by_date(df, year_col='year', month_col='month',
     return df.drop([year_col, month_col], axis=1)
 
 
+def fix_non_integers(df):
+    '''
+    Replace non integer values by fake values
+
+    Parameters:
+        df: (pandas.core.frame.DataFrame): Dataframe whose columns will be
+            fixed
+
+    Returns:
+        df: (pandas.core.frame.DataFrame): Dataframe with the replacements
+            applied
+    '''
+    df['CO_CUCI_ITEM'] = df['CO_CUCI_ITEM']\
+        .replace('II', 2).replace('I', 1).astype(int)
+    df['CO_EXP_SUBSET'] = df['CO_EXP_SUBSET'].fillna(0).astype(int)
+    return df
+
+
 def add_full_data(csv_paths, table, encoding=None):
     '''
     Add all data from CSV files to database tables
@@ -83,7 +101,9 @@ def add_full_data(csv_paths, table, encoding=None):
                 chunk = replace_year_month_by_date(chunk, year_col='CO_ANO',
                                                    month_col='CO_MES',
                                                    date_col='DATA')
-            elif table not in ['ncm', 'uf']:
+            elif table == 'ncm':
+                chunk = fix_non_integers(chunk)
+            elif table != 'uf':
                 err_msg = (f'Unknown value for "table": {table}. '
                            'Must be one of "import", "export", "ncm" or "uf".')
                 raise ValueError(err_msg)

@@ -40,6 +40,7 @@ ${TABLES}: /data/%:
 	wget -P /data -Nc -nv "$(BASEURL)/tabelas/$(subst /data/,,$@)"
 
 /data/trades.db: ${TABLES} ${IMPORTS} ${EXPORTS}
+	${PYTHON} scripts/create_db.py --db=$@ && \
 	${PYTHON} scripts/add_data.py ${IMPORTS} --db=$@ --table=import && \
 	${PYTHON} scripts/add_data.py ${EXPORTS} --db=$@ --table=export && \
 	${PYTHON} scripts/add_data.py /data/NCM.csv --db=$@ --table=ncm --encoding=ISO-8859-1 && \
