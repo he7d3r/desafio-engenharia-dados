@@ -82,3 +82,9 @@ The app should be be available at http://localhost:5000/. The option `--reload` 
 ## Notes
 
 For a first look into the data, check out the Jupyter notebooks inside the directory `notebooks`.
+
+## Database Layout
+
+Currently, the database tables are organized as follows:
+
+![Database Diagram](diagram.png)
