@@ -14,7 +14,7 @@ import docopt
 import os
 
 from sqlalchemy import create_engine
-from sqlalchemy import (BigInteger, Column, Date, ForeignKey, Integer,
+from sqlalchemy import (BigInteger, Column, Date, Float, ForeignKey, Integer,
                         SmallInteger, String, Text)
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -132,6 +132,65 @@ class Uf(Base):
         self.SG_UF = SG_UF
         self.NO_UF = NO_UF
         self.NO_REGIAO = NO_REGIAO
+
+
+class TopByStateAndYear(Base):
+
+    __tablename__ = 'top_by_state_and_year'
+
+    federative_unit = Column(String(2), ForeignKey('uf.SG_UF'),
+                             primary_key=True)
+    year = Column(SmallInteger, primary_key=True)
+    kind = Column(String(6), primary_key=True)
+    product = Column(Integer, ForeignKey('ncm.CO_NCM'), primary_key=True)
+    total = Column(BigInteger, nullable=False)
+
+    def __init__(self, federative_unit, year, kind, product, total):
+        self.federative_unit = federative_unit
+        self.year = year
+        self.kind = kind
+        self.product = product
+        self.total = total
+
+
+class TopByStateAndMonth(Base):
+
+    __tablename__ = 'top_by_state_and_month'
+
+    federative_unit = Column(String(2), ForeignKey('uf.SG_UF'),
+                             primary_key=True)
+    year = Column(SmallInteger, primary_key=True)
+    month = Column(SmallInteger, primary_key=True)
+    kind = Column(String(6), primary_key=True)
+    product = Column(Integer, ForeignKey('ncm.CO_NCM'), primary_key=True)
+    total = Column(BigInteger, nullable=False)
+
+    def __init__(self, federative_unit, year, month, kind, product, total):
+        self.federative_unit = federative_unit
+        self.year = year
+        self.month = month
+        self.kind = kind
+        self.product = product
+        self.total = total
+
+
+class StateContributions(Base):
+
+    __tablename__ = 'state_contributions'
+
+    kind = Column(String(6), primary_key=True)
+    year = Column(SmallInteger, primary_key=True)
+    federative_unit = Column(String(2), ForeignKey('uf.SG_UF'),
+                             primary_key=True)
+    total = Column(BigInteger, nullable=False)
+    percentage = Column(Float, nullable=False)
+
+    def __init__(self, kind, year, federative_unit, total, percentage):
+        self.kind = kind
+        self.year = year
+        self.federative_unit = federative_unit
+        self.total = total
+        self.percentage = percentage
 
 
 def create(database_url):
