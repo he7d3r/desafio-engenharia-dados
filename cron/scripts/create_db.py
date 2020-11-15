@@ -27,14 +27,14 @@ class Import(Base):
     __tablename__ = 'import'
 
     CO_NCM = Column(Integer, ForeignKey('ncm.CO_NCM'), primary_key=True)
-    CO_UNID = Column(SmallInteger)
+    CO_UNID = Column(SmallInteger, nullable=False)
     CO_PAIS = Column(SmallInteger, primary_key=True)
     SG_UF_NCM = Column(String(2), ForeignKey('uf.SG_UF'), primary_key=True)
     CO_VIA = Column(SmallInteger, primary_key=True)
     CO_URF = Column(Integer, primary_key=True)
-    QT_ESTAT = Column(BigInteger)
-    KG_LIQUIDO = Column(BigInteger)
-    VL_FOB = Column(BigInteger)
+    QT_ESTAT = Column(BigInteger, nullable=False)
+    KG_LIQUIDO = Column(BigInteger, nullable=False)
+    VL_FOB = Column(BigInteger, nullable=False)
     DATA = Column(Date, primary_key=True)
 
     def __init__(self, CO_NCM, CO_UNID, CO_PAIS, SG_UF_NCM, CO_VIA, CO_URF,
@@ -56,14 +56,14 @@ class Export(Base):
     __tablename__ = 'export'
 
     CO_NCM = Column(Integer, ForeignKey('ncm.CO_NCM'), primary_key=True)
-    CO_UNID = Column(SmallInteger)
+    CO_UNID = Column(SmallInteger, nullable=False)
     CO_PAIS = Column(SmallInteger, primary_key=True)
     SG_UF_NCM = Column(String(2), ForeignKey('uf.SG_UF'), primary_key=True)
     CO_VIA = Column(SmallInteger, primary_key=True)
     CO_URF = Column(Integer, primary_key=True)
-    QT_ESTAT = Column(BigInteger)
-    KG_LIQUIDO = Column(BigInteger)
-    VL_FOB = Column(BigInteger)
+    QT_ESTAT = Column(BigInteger, nullable=False)
+    KG_LIQUIDO = Column(BigInteger, nullable=False)
+    VL_FOB = Column(BigInteger, nullable=False)
     DATA = Column(Date, primary_key=True)
 
     def __init__(self, CO_NCM, CO_UNID, CO_PAIS, SG_UF_NCM, CO_VIA, CO_URF,
@@ -85,19 +85,19 @@ class Ncm(Base):
     __tablename__ = 'ncm'
 
     CO_NCM = Column(Integer, primary_key=True)
-    CO_UNID = Column(SmallInteger)
-    CO_SH6 = Column(Integer)
-    CO_PPE = Column(SmallInteger)
-    CO_PPI = Column(SmallInteger)
-    CO_FAT_AGREG = Column(SmallInteger)
-    CO_CUCI_ITEM = Column(SmallInteger)
-    CO_CGCE_N3 = Column(SmallInteger)
-    CO_SIIT = Column(SmallInteger)
-    CO_ISIC_CLASSE = Column(SmallInteger)
-    CO_EXP_SUBSET = Column(SmallInteger)
-    NO_NCM_POR = Column(Text(344))
-    NO_NCM_ESP = Column(String(255))
-    NO_NCM_ING = Column(String(255))
+    CO_UNID = Column(SmallInteger, nullable=False)
+    CO_SH6 = Column(Integer, nullable=False)
+    CO_PPE = Column(SmallInteger, nullable=False)
+    CO_PPI = Column(SmallInteger, nullable=False)
+    CO_FAT_AGREG = Column(SmallInteger, nullable=False)
+    CO_CUCI_ITEM = Column(SmallInteger, nullable=False)
+    CO_CGCE_N3 = Column(SmallInteger, nullable=False)
+    CO_SIIT = Column(SmallInteger, nullable=False)
+    CO_ISIC_CLASSE = Column(SmallInteger, nullable=False)
+    CO_EXP_SUBSET = Column(SmallInteger, nullable=False)
+    NO_NCM_POR = Column(Text(344), nullable=False)
+    NO_NCM_ESP = Column(String(255), nullable=False)
+    NO_NCM_ING = Column(String(255), nullable=False)
 
     def __init__(self, CO_NCM, CO_UNID, CO_SH6, CO_PPE, CO_PPI, CO_FAT_AGREG,
                  CO_CUCI_ITEM, CO_CGCE_N3, CO_SIIT, CO_ISIC_CLASSE,
@@ -122,10 +122,10 @@ class Uf(Base):
 
     __tablename__ = 'uf'
 
-    CO_UF = Column(SmallInteger)
+    CO_UF = Column(SmallInteger, nullable=False)
     SG_UF = Column(String(2), primary_key=True)
-    NO_UF = Column(String(24))
-    NO_REGIAO = Column(String(24))
+    NO_UF = Column(String(24), nullable=False)
+    NO_REGIAO = Column(String(24), nullable=False)
 
     def __init__(self, CO_UF, SG_UF, NO_UF, NO_REGIAO):
         self.CO_UF = CO_UF
