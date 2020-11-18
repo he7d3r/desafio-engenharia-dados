@@ -53,7 +53,10 @@ tests: test-min-rows-uf \
 	test-min-rows-import \
 	test-min-rows-export \
 	test-min-distinct-prod-import \
-	test-min-distinct-prod-export
+	test-min-distinct-prod-export \
+	test-max-total-prices-yearly \
+	test-max-total-prices-monthly \
+	test-min-rows-state_contributions
 
 # Ensure the number of rows is at least the number of Brazilian states (26)
 test-min-rows-uf: /data/trades.db
