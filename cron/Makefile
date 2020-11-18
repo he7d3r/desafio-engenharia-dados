@@ -5,6 +5,7 @@ YEARS := $(shell seq ${FIRST} ${LAST})
 IMPORTS := $(addprefix /data/IMP_,$(addsuffix .csv,${YEARS}))
 EXPORTS := $(addprefix /data/EXP_,$(addsuffix .csv,${YEARS}))
 TABLES = /data/NCM.csv /data/UF.csv#/data/TABELAS_AUXILIARES.xlsx
+KINDS = import export
 
 # When run from crontab inside the container, the wrong python binary,
 # causing "ModuleNotFoundError: No module named 'docopt'". See:
@@ -39,14 +40,34 @@ ${EXPORTS}: /data/EXP_%.csv:
 ${TABLES}: /data/%:
 	wget -P /data -Nc -nv "$(BASEURL)/tabelas/$(subst /data/,,$@)"
 
+# Populate the database with with the full data, by kind and by year, and also
+# add some aggregated data which will be used by the app. For the most recent
+# year, include more detailed data.
 /data/trades.db: ${TABLES} ${IMPORTS} ${EXPORTS}
 	${PYTHON} scripts/create_db.py --db=$@ && \
-	${PYTHON} scripts/add_data.py ${IMPORTS} --db=$@ --table=import && \
-	${PYTHON} scripts/add_data.py ${EXPORTS} --db=$@ --table=export && \
-	${PYTHON} scripts/add_data.py /data/NCM.csv --db=$@ --table=ncm --encoding=ISO-8859-1 && \
-	${PYTHON} scripts/add_data.py /data/UF.csv --db=$@ --table=uf --encoding=ISO-8859-1 && \
-	${PYTHON} scripts/add_aggregated_data.py --db=$@ --table=import && \
-	${PYTHON} scripts/add_aggregated_data.py --db=$@ --table=export
+	${PYTHON} scripts/add_data.py /data/NCM.csv --db=$@ \
+		--table=ncm --encoding=ISO-8859-1 && \
+	${PYTHON} scripts/add_data.py /data/UF.csv --db=$@ \
+		--table=uf --encoding=ISO-8859-1 && \
+	for KIND in ${KINDS}; do \
+		YEAR=${FIRST}; while [ "$$YEAR" -le ${LAST} ]; do \
+			if [ "$$KIND" = "import" ]; then \
+				${PYTHON} scripts/add_data.py /data/IMP_$$YEAR.csv --db=$@ \
+					--table=$$KIND; \
+			else \
+				${PYTHON} scripts/add_data.py /data/EXP_$$YEAR.csv --db=$@ \
+					--table=$$KIND; \
+			fi; \
+			if [ "$$YEAR" -eq ${LAST} ]; then \
+				${PYTHON} scripts/add_aggregated_data.py --db=$@ \
+					--table=$$KIND --year=$$YEAR --more-data;\
+			else \
+				${PYTHON} scripts/add_aggregated_data.py --db=$@ \
+					--table=$$KIND --year=$$YEAR; \
+			fi; \
+			YEAR=$$((YEAR + 1)); \
+		done; \
+	done
 
 tests: test-min-rows-uf \
 	test-min-rows-ncm \

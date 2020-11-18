@@ -3,13 +3,17 @@
 """Add tables with aggregated data for ease of consumption
 
 Usage:
-    add_aggregated_data [--db=<path>] [--table=<name>]
+    add_aggregated_data [--db=<path>] [--table=<name>] [--year=<int>]
+                        [--more-data]
     add_aggregated_data -h | --help
 
 Options:
-    -h --help           Show this screen.
-    --db=<path>         The path to a file for the database
-    --table=<name>      The name for a table in the database
+    -h --help                 Show this screen.
+    --db=<path>               The path to a file for the database
+    --table=<name>            The name for a table in the database
+    --year=<int>              The year whose data should be aggregated
+    --more-data               Add data to the tables 'top_by_state_and_month'
+                              and  'state_contributions'
 """
 import docopt
 import os.path
@@ -26,16 +30,18 @@ def main(argv=None):
     engine = create_engine('sqlite:///{}'.format(db_path))
 
     table = args['--table']
+    year = args['--year']
 
-    add_top_by_state_and_year_from(table)
-    add_top_by_state_and_month_from(table)
-    add_state_contributions_from(table)
+    add_top_by_state_and_year_from(table, year)
+    if args['--more-data']:
+        add_top_by_state_and_month_from(table, year)
+        add_state_contributions_from(table, year)
 
 
-def add_top_by_state_and_year_from(table, n=3, years=[2017, 2018, 2019]):
+def add_top_by_state_and_year_from(table, year, n=3):
     '''
     Add table with top n products with highest total traded value in the
-    specified years, by year, by state.
+    specified year, by state.
     '''
 
     query = f'''
@@ -44,7 +50,7 @@ def add_top_by_state_and_year_from(table, n=3, years=[2017, 2018, 2019]):
               year,
               product,
               total,
-              ROW_NUMBER() OVER(PARTITION BY federative_unit, year
+              ROW_NUMBER() OVER(PARTITION BY federative_unit
                                 ORDER BY total DESC) AS position
        FROM
          (SELECT SG_UF_NCM federative_unit,
@@ -52,8 +58,8 @@ def add_top_by_state_and_year_from(table, n=3, years=[2017, 2018, 2019]):
                  s.CO_NCM product,
                  SUM(VL_FOB) total
           FROM {table} s
-          GROUP BY year,
-                   federative_unit,
+          WHERE year = "{year}"
+          GROUP BY federative_unit,
                    product))
     SELECT t.federative_unit,
            t.year,
@@ -65,7 +71,7 @@ def add_top_by_state_and_year_from(table, n=3, years=[2017, 2018, 2019]):
              t.year,
              t.total DESC
     '''
-    print(f'Adding top products by state and year from {table}')
+    print(f'Adding top products by state from {table} ({year}).')
     with engine.connect() as connection:
         df = pd.read_sql(query, connection)
         df['kind'] = table
@@ -73,7 +79,7 @@ def add_top_by_state_and_year_from(table, n=3, years=[2017, 2018, 2019]):
                   index=False)
 
 
-def add_top_by_state_and_month_from(table, n=3, year=2019):
+def add_top_by_state_and_month_from(table, year, n=3):
     '''
     Add table with top n products with highest total traded value in the
     specified year, by month, by state.
@@ -110,7 +116,7 @@ def add_top_by_state_and_month_from(table, n=3, year=2019):
              t.month,
              t.total DESC
     '''
-    print(f'Adding top products by state and month from {table}')
+    print(f'Adding top products by state and month from {table} ({year}).')
     with engine.connect() as connection:
         df = pd.read_sql(query, connection)
         df['kind'] = table
@@ -118,7 +124,7 @@ def add_top_by_state_and_month_from(table, n=3, year=2019):
                   index=False)
 
 
-def add_state_contributions_from(table, year=2019):
+def add_state_contributions_from(table, year):
     '''
     Add table with the percentage of contribution of each state to the
     country's total transactions in the given year.
@@ -137,7 +143,7 @@ def add_state_contributions_from(table, year=2019):
     GROUP BY SG_UF_NCM
     ORDER BY total DESC
     '''
-    print(f'Adding state contributions from {table}')
+    print(f'Adding state contributions from {table} ({year}).')
     with engine.connect() as connection:
         df = pd.read_sql(query, connection)
         df['kind'] = table

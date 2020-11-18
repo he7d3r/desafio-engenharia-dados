@@ -88,7 +88,7 @@ def add_full_data(csv_paths, table, encoding=None):
     '''
     Add all data from CSV files to database tables
     '''
-    chunk_size = 500000
+    chunk_size = 200000
     for csv_path in csv_paths:
         print(f'Processing {csv_path}')
         chunks = pd.read_csv(
