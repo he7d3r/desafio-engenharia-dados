@@ -11,26 +11,19 @@ After cloning the project, and going to its folder, use Docker Compose to build 
 docker-compose up -d
 ```
 
-This should take care of building the images and running the following services:
+This should take care of building the images and running the following:
 
-- **cron-downloader**:
-  - Download the raw data (if not already done) into the `data` folder
-  - Create and populate a SQLite database in the same directory
-  - Do a sanity test of the data
-  - Start a cron job for downloads
-- **app** + **nginx**: Make the dashboard app available at http://localhost:80, and at URLs such as http://localhost/dashboard/SC/2019, where "SC" and "2019" can be replaced by other state codes and years respectively.
-
-In case the data is already downloaded, added to the database, and you don't need the cron job running, it is enough to run the following to have access to the dashboard:
-
-```bash
-docker-compose up -d nginx
-```
+- Start a cron job to download the raw data (if not already done) into the `data` folder
+- Create and populate a SQLite database in the same directory
+- Do a sanity test of the data
+- Make the dashboard app available at http://localhost:80 (via nginx), and at URLs such as http://localhost/dashboard/SC/2019, where "SC" and "2019" can be replaced by other state codes and years respectively.
 
 ### Other useful commands
 
 #### Debugging
 
-You can enable Flask's debug mode by setting a environment variable like this:
+You can toggle Flask's debug mode by setting the FLASK_ENV environment variable
+to `production` or `development`, like this:
 
 ```bash
 FLASK_ENV=development docker-compose up -d app
@@ -42,16 +35,18 @@ or by adding the same setting to a `.env` file:
 echo "FLASK_ENV=development" >> .env
 ```
 
-To disable it again, set `FLASK_ENV` to `production` instead of `development`.
-
 #### Get the data into an SQLite database
 
-To get a container for the downloader, run the following (replacing `<img_name>` with a name of your choice):
+To get a container to download the data and populate the database, run the following (replacing `<img_name>` with a name of your choice):
 
 ```bash
-docker build -f cron/Dockerfile -t <img_name> .
-docker run -d -e DATABASE_URL='sqlite:////data/trades.db' \
-    -v `pwd`/data:/data <img_name>
+docker build -f dashboard/Dockerfile -t <img_name> .
+docker run -it -e DATABASE_URL='sqlite:////data/trades.db' \
+    -v `pwd`/data:/data \
+    -v `pwd`/dashboard/src:/code/src \
+    --name <container_name> <img_name> \
+    /bin/bash
+make /data/trades.db # Inside the container
 ```
 
 #### Check the cron service status
@@ -64,11 +59,11 @@ docker exec -it <container_id> service cron status
 
 #### Test the database
 
-After making changes to the data pipeline, it can be useful to check if the database still contains the expected data. For this, just run `make tests` inside the `cron` container, that is:
+After making changes to the data pipeline, it can be useful to check if the database still contains the expected data. For this, just run `make tests` inside the `flask` container, that is:
 
 ```bash
-docker-compose up -d cron-downloader
-docker exec -it cron make tests
+docker-compose up -d app
+docker exec -it flask make tests
 ```
 
 This will ensure a reasonable number of rows is present in each table.

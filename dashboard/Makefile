@@ -44,25 +44,25 @@ ${TABLES}: /data/%:
 # add some aggregated data which will be used by the app. For the most recent
 # year, include more detailed data.
 /data/trades.db: ${TABLES} ${IMPORTS} ${EXPORTS}
-	${PYTHON} scripts/create_db.py --db=$$DATABASE_URL && \
-	${PYTHON} scripts/add_data.py /data/NCM.csv --db=$$DATABASE_URL \
+	flask create-db && \
+	${PYTHON} src/scripts/add_data.py /data/NCM.csv --db=$$DATABASE_URL \
 		--table=ncm --encoding=ISO-8859-1 && \
-	${PYTHON} scripts/add_data.py /data/UF.csv --db=$$DATABASE_URL \
+	${PYTHON} src/scripts/add_data.py /data/UF.csv --db=$$DATABASE_URL \
 		--table=uf --encoding=ISO-8859-1 && \
 	for KIND in ${KINDS}; do \
 		YEAR=${FIRST}; while [ "$$YEAR" -le ${LAST} ]; do \
 			if [ "$$KIND" = "import" ]; then \
-				${PYTHON} scripts/add_data.py /data/IMP_$$YEAR.csv \
+				${PYTHON} src/scripts/add_data.py /data/IMP_$$YEAR.csv \
 					--db=$$DATABASE_URL --table=$$KIND; \
 			else \
-				${PYTHON} scripts/add_data.py /data/EXP_$$YEAR.csv \
+				${PYTHON} src/scripts/add_data.py /data/EXP_$$YEAR.csv \
 					--db=$$DATABASE_URL --table=$$KIND; \
 			fi; \
 			if [ "$$YEAR" -eq ${LAST} ]; then \
-				${PYTHON} scripts/add_aggregated_data.py --db=$$DATABASE_URL \
+				${PYTHON} src/scripts/add_aggregated_data.py --db=$$DATABASE_URL \
 					--table=$$KIND --year=$$YEAR --more-data;\
 			else \
-				${PYTHON} scripts/add_aggregated_data.py --db=$$DATABASE_URL \
+				${PYTHON} src/scripts/add_aggregated_data.py --db=$$DATABASE_URL \
 					--table=$$KIND --year=$$YEAR; \
 			fi; \
 			YEAR=$$((YEAR + 1)); \
