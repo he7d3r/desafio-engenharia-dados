@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Create an sqlite database with the appropriate tables
+"""Create a database with the appropriate tables
 
 Usage:
     create_db [--db=<path>]
@@ -8,7 +8,7 @@ Usage:
 
 Options:
     -h --help           Show this screen.
-    --db=<path>         The path to a file for the database
+    --db=<path>         The url for the database
 """
 import docopt
 import os
@@ -202,8 +202,7 @@ def main(argv=None):
 
     args = docopt.docopt(__doc__, argv=argv)
 
-    db_path = os.path.expanduser(args['--db'])
-    database_url = f'sqlite:///{db_path}'
+    database_url = os.path.expanduser(args['--db'])
 
     create(database_url)
 

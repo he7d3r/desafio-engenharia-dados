@@ -44,25 +44,25 @@ ${TABLES}: /data/%:
 # add some aggregated data which will be used by the app. For the most recent
 # year, include more detailed data.
 /data/trades.db: ${TABLES} ${IMPORTS} ${EXPORTS}
-	${PYTHON} scripts/create_db.py --db=$@ && \
-	${PYTHON} scripts/add_data.py /data/NCM.csv --db=$@ \
+	${PYTHON} scripts/create_db.py --db=$$DATABASE_URL && \
+	${PYTHON} scripts/add_data.py /data/NCM.csv --db=$$DATABASE_URL \
 		--table=ncm --encoding=ISO-8859-1 && \
-	${PYTHON} scripts/add_data.py /data/UF.csv --db=$@ \
+	${PYTHON} scripts/add_data.py /data/UF.csv --db=$$DATABASE_URL \
 		--table=uf --encoding=ISO-8859-1 && \
 	for KIND in ${KINDS}; do \
 		YEAR=${FIRST}; while [ "$$YEAR" -le ${LAST} ]; do \
 			if [ "$$KIND" = "import" ]; then \
-				${PYTHON} scripts/add_data.py /data/IMP_$$YEAR.csv --db=$@ \
-					--table=$$KIND; \
+				${PYTHON} scripts/add_data.py /data/IMP_$$YEAR.csv \
+					--db=$$DATABASE_URL --table=$$KIND; \
 			else \
-				${PYTHON} scripts/add_data.py /data/EXP_$$YEAR.csv --db=$@ \
-					--table=$$KIND; \
+				${PYTHON} scripts/add_data.py /data/EXP_$$YEAR.csv \
+					--db=$$DATABASE_URL --table=$$KIND; \
 			fi; \
 			if [ "$$YEAR" -eq ${LAST} ]; then \
-				${PYTHON} scripts/add_aggregated_data.py --db=$@ \
+				${PYTHON} scripts/add_aggregated_data.py --db=$$DATABASE_URL \
 					--table=$$KIND --year=$$YEAR --more-data;\
 			else \
-				${PYTHON} scripts/add_aggregated_data.py --db=$@ \
+				${PYTHON} scripts/add_aggregated_data.py --db=$$DATABASE_URL \
 					--table=$$KIND --year=$$YEAR; \
 			fi; \
 			YEAR=$$((YEAR + 1)); \
@@ -82,7 +82,7 @@ tests: test-min-rows-uf \
 # Ensure the number of rows is at least the number of Brazilian states (26)
 test-min-rows-uf: /data/trades.db
 	@$(eval min_rows=26)
-	@$(eval n_rows=$(shell sql2csv -vH --db "sqlite:///$<" --query="SELECT COUNT(*) FROM uf"))
+	@$(eval n_rows=$(shell sql2csv -vH --db "$$DATABASE_URL" --query="SELECT COUNT(*) FROM uf"))
 	@if [ "$(n_rows)" -ge "$(min_rows)" ]; then \
 		echo "OK: There are at least $(min_rows) rows in table 'uf'"; \
 	else \
@@ -94,7 +94,7 @@ test-min-rows-uf: /data/trades.db
 # (the current number is at least twice that value)
 test-min-rows-ncm: /data/trades.db
 	@$(eval min_rows=6000)
-	@$(eval n_rows=$(shell sql2csv -vH --db "sqlite:///$<" --query="SELECT COUNT(*) FROM ncm"))
+	@$(eval n_rows=$(shell sql2csv -vH --db "$$DATABASE_URL" --query="SELECT COUNT(*) FROM ncm"))
 	@if [ "$(n_rows)" -ge "$(min_rows)" ]; then \
 		echo "OK: There are at least $(min_rows) product rows in table 'ncm'"; \
 	else \
@@ -106,7 +106,7 @@ test-min-rows-ncm: /data/trades.db
 # (the current numbers are at least twice that value)
 test-min-rows-import: /data/trades.db
 	@$(eval min_rows=500000)
-	@$(eval n_incomplete_years=$(shell sql2csv -vH --db "sqlite:///$<" --query="SELECT COUNT(*) c FROM (SELECT strftime(\"%Y\", DATA) year, COUNT(*) count FROM import GROUP BY year HAVING count < $(min_rows))"))
+	@$(eval n_incomplete_years=$(shell sql2csv -vH --db "$$DATABASE_URL" --query="SELECT COUNT(*) c FROM (SELECT strftime(\"%Y\", DATA) year, COUNT(*) count FROM import GROUP BY year HAVING count < $(min_rows))"))
 	@if [ "$(n_incomplete_years)" -eq "0" ]; then \
 		echo "OK: There are at least $(min_rows) rows for each year in table 'import'"; \
 	else \
@@ -116,7 +116,7 @@ test-min-rows-import: /data/trades.db
 
 test-min-rows-export: /data/trades.db
 	@$(eval min_rows=500000)
-	@$(eval n_incomplete_years=$(shell sql2csv -vH --db "sqlite:///$<" --query="SELECT COUNT(*) c FROM (SELECT strftime(\"%Y\", DATA) year, COUNT(*) count FROM export GROUP BY year HAVING count < $(min_rows))"))
+	@$(eval n_incomplete_years=$(shell sql2csv -vH --db "$$DATABASE_URL" --query="SELECT COUNT(*) c FROM (SELECT strftime(\"%Y\", DATA) year, COUNT(*) count FROM export GROUP BY year HAVING count < $(min_rows))"))
 	@if [ "$(n_incomplete_years)" -eq "0" ]; then \
 		echo "OK: There are at least $(min_rows) rows for each year in table 'export'"; \
 	else \
@@ -128,7 +128,7 @@ test-min-rows-export: /data/trades.db
 # (the current percentage is >60%)
 test-min-distinct-prod-import: /data/trades.db
 	@$(eval min_percentage=30)
-	@$(eval percentage=$(shell sql2csv -vH --db "sqlite:///$<" --query="SELECT CAST(100 * (SELECT 1.0*COUNT(DISTINCT(CO_NCM)) FROM import) / (SELECT COUNT(*) count FROM ncm) AS INTEGER)"))
+	@$(eval percentage=$(shell sql2csv -vH --db "$$DATABASE_URL" --query="SELECT CAST(100 * (SELECT 1.0*COUNT(DISTINCT(CO_NCM)) FROM import) / (SELECT COUNT(*) count FROM ncm) AS INTEGER)"))
 	@if [ "$(percentage)" -ge "$(min_percentage)" ]; then \
 		echo "OK: At least $(min_percentage)% of the products from 'ncm' table are present in table 'import'"; \
 	else \
@@ -140,7 +140,7 @@ test-min-distinct-prod-import: /data/trades.db
 # (the current percentage is >60%)
 test-min-distinct-prod-export: /data/trades.db
 	@$(eval min_percentage=30)
-	@$(eval percentage=$(shell sql2csv -vH --db "sqlite:///$<" --query="SELECT CAST(100 * (SELECT 1.0*COUNT(DISTINCT(CO_NCM)) FROM export) / (SELECT COUNT(*) count FROM ncm) AS INTEGER)"))
+	@$(eval percentage=$(shell sql2csv -vH --db "$$DATABASE_URL" --query="SELECT CAST(100 * (SELECT 1.0*COUNT(DISTINCT(CO_NCM)) FROM export) / (SELECT COUNT(*) count FROM ncm) AS INTEGER)"))
 	@if [ "$(percentage)" -ge "$(min_percentage)" ]; then \
 		echo "OK: At least $(min_percentage)% of the products from 'ncm' table are present in table 'export'"; \
 	else \
@@ -150,7 +150,7 @@ test-min-distinct-prod-export: /data/trades.db
 
 # Ensure no group has more than 1 total price
 test-max-total-prices-yearly: /data/trades.db
-	@$(eval multiple_totals=$(shell sql2csv -vH --db "sqlite:///$<" --query="SELECT COUNT(*) FROM (SELECT kind, year, federative_unit, product, COUNT(*) count FROM top_by_state_and_year GROUP BY kind, year, federative_unit, product HAVING count > 1)"))
+	@$(eval multiple_totals=$(shell sql2csv -vH --db "$$DATABASE_URL" --query="SELECT COUNT(*) FROM (SELECT kind, year, federative_unit, product, COUNT(*) count FROM top_by_state_and_year GROUP BY kind, year, federative_unit, product HAVING count > 1)"))
 	@if [ "$(multiple_totals)" -eq "0" ]; then \
 		echo "OK: There is at most one total price per combination of (kind of transaction, year, federative_unit and product)."; \
 	else \
@@ -160,7 +160,7 @@ test-max-total-prices-yearly: /data/trades.db
 
 # Ensure no group has more than 1 total price
 test-max-total-prices-monthly: /data/trades.db
-	@$(eval multiple_totals=$(shell sql2csv -vH --db "sqlite:///$<" --query="SELECT COUNT(*) FROM (SELECT kind, year, month, federative_unit, product, COUNT(*) count FROM top_by_state_and_month GROUP BY kind, year, month, federative_unit, product HAVING count > 1)"))
+	@$(eval multiple_totals=$(shell sql2csv -vH --db "$$DATABASE_URL" --query="SELECT COUNT(*) FROM (SELECT kind, year, month, federative_unit, product, COUNT(*) count FROM top_by_state_and_month GROUP BY kind, year, month, federative_unit, product HAVING count > 1)"))
 	@if [ "$(multiple_totals)" -eq "0" ]; then \
 		echo "OK: There is at most one total price per combination of (kind of transaction, year, month, federative_unit and product)."; \
 	else \
@@ -171,7 +171,7 @@ test-max-total-prices-monthly: /data/trades.db
 # Ensure the number of rows is at least twice the number of Brazilian states (2*26)
 test-min-rows-state_contributions: /data/trades.db
 	@$(eval min_rows=52)
-	@$(eval n_rows=$(shell sql2csv -vH --db "sqlite:///$<" --query="SELECT COUNT(*) FROM state_contributions"))
+	@$(eval n_rows=$(shell sql2csv -vH --db "$$DATABASE_URL" --query="SELECT COUNT(*) FROM state_contributions"))
 	@if [ "$(n_rows)" -ge "$(min_rows)" ]; then \
 		echo "OK: There are at least $(min_rows) rows in table 'state_contributions'"; \
 	else \

@@ -50,7 +50,8 @@ To get a container for the downloader, run the following (replacing `<img_name>`
 
 ```bash
 docker build -f cron/Dockerfile -t <img_name> .
-docker run -d -v `pwd`/data:/data <img_name>
+docker run -d -e DATABASE_URL='sqlite:////data/trades.db' \
+    -v `pwd`/data:/data <img_name>
 ```
 
 #### Check the cron service status

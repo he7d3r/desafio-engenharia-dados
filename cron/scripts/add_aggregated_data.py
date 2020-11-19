@@ -9,7 +9,7 @@ Usage:
 
 Options:
     -h --help                 Show this screen.
-    --db=<path>               The path to a file for the database
+    --db=<path>               The url for the database
     --table=<name>            The name for a table in the database
     --year=<int>              The year whose data should be aggregated
     --more-data               Add data to the tables 'top_by_state_and_month'
@@ -26,8 +26,7 @@ def main(argv=None):
 
     args = docopt.docopt(__doc__, argv=argv)
 
-    db_path = os.path.expanduser(args['--db'])
-    engine = create_engine('sqlite:///{}'.format(db_path))
+    engine = create_engine(os.path.expanduser(args['--db']))
 
     table = args['--table']
     year = args['--year']

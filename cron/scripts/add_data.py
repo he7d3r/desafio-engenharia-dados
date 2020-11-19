@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Add data from CSV files to the sqlite database.
+"""Add data from CSV files to the database.
 
 Usage:
     add_data <csv-file>... [--db=<path>] [--table=<name>] [--encoding=<code>]
@@ -9,7 +9,7 @@ Usage:
 Options:
     -h --help           Show this screen.
     <csv-file>          A CSV file to process
-    --db=<path>         The path to a file for the database
+    --db=<path>         The url for the database
     --table=<name>      The name for a table in the database
     --encoding=<name>   The encoding used in the CSV file. E.g.: ISO-8859-1
 """
@@ -25,8 +25,7 @@ def main(argv=None):
     args = docopt.docopt(__doc__, argv=argv)
     csv_paths = args['<csv-file>']
 
-    db_path = os.path.expanduser(args['--db'])
-    engine = create_engine('sqlite:///{}'.format(db_path))
+    engine = create_engine(os.path.expanduser(args['--db']))
 
     table = args['--table']
     encoding = args['--encoding']
