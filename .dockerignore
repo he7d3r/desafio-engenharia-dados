@@ -1,6 +1,7 @@
 .env
 .git
 .gitignore
+data
 
 Dockerfile
 
