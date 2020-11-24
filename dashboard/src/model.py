@@ -41,7 +41,7 @@ class Ncm(db.Model):
     CO_PPE = db.Column(db.SmallInteger, nullable=False)
     CO_PPI = db.Column(db.SmallInteger, nullable=False)
     CO_FAT_AGREG = db.Column(db.SmallInteger, nullable=False)
-    CO_CUCI_ITEM = db.Column(db.SmallInteger, nullable=False)
+    CO_CUCI_ITEM = db.Column(db.Integer, nullable=False)
     CO_CGCE_N3 = db.Column(db.SmallInteger, nullable=False)
     CO_SIIT = db.Column(db.SmallInteger, nullable=False)
     CO_ISIC_CLASSE = db.Column(db.SmallInteger, nullable=False)
