@@ -252,6 +252,8 @@ def create_app():
     app = Flask(__name__)
 
     app.config.from_object('src.config.Config')
+
+    from src import model
     database.init_app(app)
     commands.init_app(app)
 
