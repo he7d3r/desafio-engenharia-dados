@@ -92,6 +92,6 @@ For a first look into the data, check out the Jupyter notebooks inside the direc
 
 ## Database Layout
 
-Currently, the database tables are organized as follows:
+Currently, the dashboard uses a database with the following tables:
 
 ![Database Diagram](diagram.png)
