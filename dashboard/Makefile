@@ -67,7 +67,7 @@ tests: test-max-total-prices-yearly \
 
 # Ensure no group has more than 1 total price
 test-max-total-prices-yearly: /data/trades.db
-	@$(eval multiple_totals=$(shell sql2csv -vH --db "$$DATABASE_URL" --query="SELECT COUNT(*) FROM (SELECT kind, year, state_code, product_code, COUNT(*) count FROM top_by_state_and_year AS t GROUP BY kind, year, state_code, product_code HAVING t.count > 1) AS s"))
+	@$(eval multiple_totals=$(shell sql2csv -vH --db "$$DATABASE_URL" --query="SELECT COUNT(*) FROM (SELECT kind, year, state_code, product_code FROM top_by_state_and_year GROUP BY kind, year, state_code, product_code HAVING COUNT(*) <> 1) AS s"))
 	@if [ "$(multiple_totals)" -eq "0" ]; then \
 		echo "OK: There is at most one total price per combination of (kind of transaction, year, state_code and product)."; \
 	else \
@@ -77,7 +77,7 @@ test-max-total-prices-yearly: /data/trades.db
 
 # Ensure no group has more than 1 total price
 test-max-total-prices-monthly: /data/trades.db
-	@$(eval multiple_totals=$(shell sql2csv -vH --db "$$DATABASE_URL" --query="SELECT COUNT(*) FROM (SELECT kind, year, month, state_code, product_code, COUNT(*) count FROM top_by_state_and_month AS t GROUP BY kind, year, month, state_code, product_code HAVING t.count > 1) AS s"))
+	@$(eval multiple_totals=$(shell sql2csv -vH --db "$$DATABASE_URL" --query="SELECT COUNT(*) FROM (SELECT kind, year, month, state_code, product_code FROM top_by_state_and_month GROUP BY kind, year, month, state_code, product_code HAVING COUNT(*) <> 1) AS s"))
 	@if [ "$(multiple_totals)" -eq "0" ]; then \
 		echo "OK: There is at most one total price per combination of (kind of transaction, year, month, state_code and product)."; \
 	else \
