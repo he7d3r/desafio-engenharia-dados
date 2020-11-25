@@ -21,10 +21,10 @@ def get_available_state_codes():
         SELECT DISTINCT(state_code) state_code,
                state
         FROM state_contributions
-        WHERE state_code IN ("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES",
-                             "GO", "MA", "MT", "MS", "MG", "PR", "PB", "PA",
-                             "PE", "PI", "RN", "RS", "RJ", "RO", "RR", "SC",
-                             "SE", "SP", "TO")
+        WHERE state_code IN ('AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES',
+                             'GO', 'MA', 'MT', 'MS', 'MG', 'PR', 'PB', 'PA',
+                             'PE', 'PI', 'RN', 'RS', 'RJ', 'RO', 'RR', 'SC',
+                             'SE', 'SP', 'TO')
         ORDER BY state
         '''
         return pd.read_sql(query, connection, index_col='state_code')
@@ -37,7 +37,7 @@ def get_available_years():
     """
     with database.db.engine.connect() as connection:
         query = '''
-        SELECT DISTINCT(year) year
+        SELECT DISTINCT(year)
         FROM top_by_state_and_year
         ORDER BY year
         '''
@@ -96,18 +96,17 @@ def get_top_products(kind, state, year, month, count=3, index=None):
     """
     if month:
         table = 'top_by_state_and_month'
-        period_filter = f't.year="{year}" AND t.month="{month}"'
+        period_filter = f't.year=\'{year}\' AND t.month=\'{month}\''
     else:
         table = 'top_by_state_and_year'
-        period_filter = f't.year="{year}"'
+        period_filter = f't.year=\'{year}\''
 
     query = f'''
     SELECT t.product, t.state, t.total
     FROM {table} t
     WHERE {period_filter}
-        AND t.state_code="{state}"
-        AND t.kind="{kind}"
-    GROUP BY t.product
+        AND t.state_code='{state}'
+        AND t.kind='{kind}'
     ORDER BY t.total
     LIMIT {count}
     '''
@@ -131,8 +130,8 @@ def get_top_contributions(kind, year, limit=3, index=None):
     query = f'''
     SELECT s.state_code, s.state, s.total, s.percentage
     FROM state_contributions s
-    WHERE year = "{year}"
-      AND kind = "{kind}"
+    WHERE year = '{year}'
+      AND kind = '{kind}'
     ORDER BY s.percentage DESC
     {limit}
     '''
