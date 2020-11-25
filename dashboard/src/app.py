@@ -12,21 +12,22 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from src import commands, database
 
 
-def get_available_federative_units():
+def get_available_state_codes():
     """
     Get states' codes and names from DB and return them as a dataframe
     """
     with database.db.engine.connect() as connection:
         query = '''
-        SELECT DISTINCT(SG_UF) code,
-               NO_UF name
-        FROM uf
-        WHERE code IN ("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO",
-                       "MA", "MT", "MS", "MG", "PR", "PB", "PA", "PE", "PI",
-                       "RN", "RS", "RJ", "RO", "RR", "SC", "SE", "SP", "TO")
-        ORDER BY name
+        SELECT DISTINCT(state_code) state_code,
+               state
+        FROM state_contributions
+        WHERE state_code IN ("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES",
+                             "GO", "MA", "MT", "MS", "MG", "PR", "PB", "PA",
+                             "PE", "PI", "RN", "RS", "RJ", "RO", "RR", "SC",
+                             "SE", "SP", "TO")
+        ORDER BY state
         '''
-        return pd.read_sql(query, connection, index_col='code')
+        return pd.read_sql(query, connection, index_col='state_code')
 
 
 def get_available_years():
@@ -36,8 +37,8 @@ def get_available_years():
     """
     with database.db.engine.connect() as connection:
         query = '''
-        SELECT DISTINCT(strftime("%Y", DATA)) year
-        FROM export
+        SELECT DISTINCT(year) year
+        FROM top_by_state_and_year
         ORDER BY year
         '''
         return pd.read_sql(query, connection).year.astype(int).values.tolist()
@@ -101,14 +102,10 @@ def get_top_products(kind, state, year, month, count=3, index=None):
         period_filter = f't.year="{year}"'
 
     query = f'''
-    SELECT n.NO_NCM_POR product_name,
-        u.NO_UF federative_unit_name,
-        t.total
+    SELECT t.product, t.state, t.total
     FROM {table} t
-    JOIN uf u ON t.federative_unit=u.SG_UF
-    JOIN ncm n ON t.product=n.CO_NCM
     WHERE {period_filter}
-        AND t.federative_unit="{state}"
+        AND t.state_code="{state}"
         AND t.kind="{kind}"
     GROUP BY t.product
     ORDER BY t.total
@@ -132,15 +129,11 @@ def get_top_contributions(kind, year, limit=3, index=None):
     limit = f'LIMIT {limit}' if limit is not None else ''
 
     query = f'''
-    SELECT federative_unit,
-           u.NO_UF name,
-           total,
-           percentage
+    SELECT s.state_code, s.state, s.total, s.percentage
     FROM state_contributions s
-    JOIN uf u ON s.federative_unit=u.SG_UF
     WHERE year = "{year}"
       AND kind = "{kind}"
-    ORDER BY percentage DESC
+    ORDER BY s.percentage DESC
     {limit}
     '''
     with database.db.engine.connect() as connection:
@@ -180,9 +173,9 @@ def get_contribution_plot(df, state, title=None):
             return '%1.1f%%' % percent
 
     # Highlight the current state
-    explode = [0.03 if code != state else 0.2 for code in df.federative_unit]
+    explode = [0.03 if code != state else 0.2 for code in df.state_code]
     colors = ['#CCC' if code != state else '#66F'
-              for code in df.federative_unit]
+              for code in df.state_code]
 
     # Hide the percentages of small contributions, unless it is for the
     # current state. In that case, show it as part of the label, since it would
@@ -191,7 +184,7 @@ def get_contribution_plot(df, state, title=None):
               name + ' ({})'.format(
                   pct_format(df['percentage'][name],
                              skip_small_values=False)
-                            ) if df['federative_unit'][name] == state
+                            ) if df['state_code'][name] == state
               else '' for name in df.index]
 
     fig, ax = plt.subplots()
@@ -274,15 +267,15 @@ def create_app():
                          available).
         """
         previous_year = datetime.now().year - 1
-        available_states = get_available_federative_units()
+        available_state_codes = get_available_state_codes()
         if state_code is None:
             # Use a large state as default
-            if 'SP' in available_states.index:
+            if 'SP' in available_state_codes.index:
                 state_code = 'SP'
             else:
-                state_code = str(available_states.index[0])
-        if state_code in available_states.index:
-            state_name = available_states['name'][state_code]
+                state_code = str(available_state_codes.index[0])
+        if state_code in available_state_codes.index:
+            state_name = available_state_codes['state'][state_code]
             available_years = get_available_years()
             if year is None:
                 year = previous_year
@@ -298,25 +291,25 @@ def create_app():
                 if month is None and year == previous_year:
                     group = f'({year})'
                     img_top_importers = get_plot(
-                        get_top_contributions('import', year, index='name'),
+                        get_top_contributions('import', year, index='state'),
                         ylabel='Estado',
                         title=f'Maiores importadores {group}'
                     )
                     img_top_exporters = get_plot(
-                        get_top_contributions('export', year, index='name'),
+                        get_top_contributions('export', year, index='state'),
                         ylabel='Estado',
                         title=f'Maiores exportadores {group}'
                     )
                     img_contribution_to_imports = get_contribution_plot(
                         get_top_contributions('import', year, limit=None,
-                                              index='name'),
+                                              index='state'),
                         state=state_code,
                         title='Representatividade das importações do estado no'
                         + ' ano\nem relação ao total de importações do país'
                     )
                     img_contribution_to_exports = get_contribution_plot(
                         get_top_contributions('export', year, limit=None,
-                                              index='name'),
+                                              index='state'),
                         state=state_code,
                         title='Representatividade das exportações do estado no'
                         + ' ano\nem relação ao total de exportações do país'
@@ -330,13 +323,13 @@ def create_app():
                 group = f'({state_name}, {month_name} de {year})'
                 img_top_imports = get_plot(
                     get_top_products('import', state_code, year, month,
-                                     index='product_name'),
+                                     index='product'),
                     ylabel='Produto',
                     title=f'Produtos mais importados {group}'
                 )
                 img_top_exports = get_plot(
                     get_top_products('export', state_code, year, month,
-                                     index='product_name'),
+                                     index='product'),
                     ylabel='Produto',
                     title=f'Produtos mais exportados {group}'
                 )
@@ -348,7 +341,7 @@ def create_app():
                     available_years=available_years,
                     year=year,
                     previous_year=previous_year,
-                    available_states=available_states,
+                    available_state_codes=available_state_codes,
                     state_code=state_code,
                     img_top_imports=img_top_imports,
                     img_top_exports=img_top_exports,

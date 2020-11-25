@@ -19,8 +19,8 @@
 <div id="location">    
     <b>Estado</b>
     <select name="form-state" onchange="location = this.value;">
-      {% for choice in available_states.index %}
-          <option value="{{ url_for('dashboard', state_code=choice, year=year) }}" {% if state_code==choice %} selected="selected"{% endif %}>{{ available_states['name'][choice] }}</option>
+      {% for choice in available_state_codes.index %}
+          <option value="{{ url_for('dashboard', state_code=choice, year=year) }}" {% if state_code==choice %} selected="selected"{% endif %}>{{ available_state_codes['state'][choice] }}</option>
       {% endfor %}
     </select>    
 </div>
