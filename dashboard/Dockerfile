@@ -5,7 +5,7 @@ RUN apt-get update \
     && apt-get -y install cron
 
 # Create and set working directory
-WORKDIR /code
+WORKDIR /dashboard
 
 # Install python packages
 COPY dashboard/requirements.txt ./
@@ -23,4 +23,4 @@ RUN chmod +x ./entrypoint.sh
 
 # Copy the makefile to the working directory
 COPY dashboard/Makefile ./
-ENTRYPOINT ["/code/entrypoint.sh"]
+ENTRYPOINT ["/dashboard/entrypoint.sh"]

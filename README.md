@@ -43,7 +43,7 @@ To get a container to download the data and populate the database, run the follo
 docker build -f dashboard/Dockerfile -t <img_name> .
 docker run -it -e DATABASE_URL='sqlite:////data/trades.db' \
     -v `pwd`/data:/data \
-    -v `pwd`/dashboard/src:/code/src \
+    -v `pwd`/dashboard/src:/dashboard/src \
     --name <container_name> <img_name> \
     /bin/bash
 make /data/trades.db # Inside the container
@@ -79,7 +79,7 @@ docker run -d -e FLASK_APP='src/app.py' \
     -e DATABASE_URL='sqlite:////data/trades.db' \
     -p 5000:5000 \
     -v `pwd`/data:/data \
-    -v `pwd`/dashboard/src:/code/src \
+    -v `pwd`/dashboard/src:/dashboard/src \
     --name <container_name> <img_name> \
     gunicorn --reload --bind 0.0.0.0:5000 --workers 4 "src.app:create_app()"
 ```
