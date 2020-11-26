@@ -3,6 +3,10 @@
 
 ## Quick start
 
+### See it in action
+
+The dashboard is currently available at https://import-export-dashboard.herokuapp.com.
+
 ### Using Docker Compose
 
 After cloning the project, and going to its folder, use Docker Compose to build and run the images as follows:
