@@ -90,6 +90,14 @@ docker run -d -e FLASK_APP='src/app.py' \
 
 In this example, the app should be be available at http://localhost:5000/. If needed, add the option `--reload` to allow changes made to app source code (inside the folder `dashboard/src` on the host) to go live without needing to rebuild its image (reloading the page in the browser will be enough).
 
+### Running tests
+
+To run some basic tests, use
+
+```bash
+pytest
+```
+
 ## Notes
 
 For a first look into the data, check out the Jupyter notebooks inside the directory `notebooks`.
