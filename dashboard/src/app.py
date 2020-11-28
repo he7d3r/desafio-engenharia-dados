@@ -53,7 +53,7 @@ def get_month_name(month):
 
     Returns:
         name: (str): The name of the month in Portuguese, or
-        'todos os meses' (all months) if month is None
+        'todos os meses' (all months) if month is not in the range from 1 to 12
     """
     names = {
         1: 'janeiro', 2: 'fevereiro', 3: 'março', 4: 'abril',
@@ -62,8 +62,7 @@ def get_month_name(month):
     }
     if month in names:
         return names[month]
-    elif month is None:
-        return 'todos os meses'
+    return 'todos os meses'
 
 
 def get_month_options(year):
@@ -79,8 +78,7 @@ def get_month_options(year):
     previous_year = datetime.now().year - 1
     if year == previous_year:
         return list(range(1, 13))
-    else:
-        return []
+    return []
 
 
 def get_top_products(kind, state, year, month, count=3, index=None):
@@ -183,8 +181,7 @@ def get_contribution_plot(df, state, title=None):
     def pct_format(percent, skip_small_values=True):
         if percent <= threshold and skip_small_values:
             return ''
-        else:
-            return '%1.1f%%' % percent
+        return '%1.1f%%' % percent
 
     # Highlight the current state
     explode = [0.03 if code != state else 0.2 for code in df.state_code]
