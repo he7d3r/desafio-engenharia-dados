@@ -155,6 +155,21 @@ def large_num_formatter(num, pos=None):
     return "%.1f %s" % (num, 'Tri.')
 
 
+def get_data_url(fig):
+    '''
+    Generate a data url using the base 64 encoding of the figure
+    '''
+    png_image = io.BytesIO()
+    canvas = FigureCanvasAgg(fig)
+    canvas.print_png(png_image)
+
+    png_image_in_base_64 = 'data:image/png;base64,{}'.format(
+        base64.b64encode(png_image.getvalue()).decode('utf8')
+    )
+
+    return png_image_in_base_64
+
+
 def get_contribution_plot(df, state, title=None):
     """
     Make a pie chart of the percentage of contribution of each state
@@ -192,15 +207,7 @@ def get_contribution_plot(df, state, title=None):
     if title:
         ax.set_title(title, pad=20)
     plt.tight_layout()
-    png_image = io.BytesIO()
-    canvas = FigureCanvasAgg(fig)
-    canvas.print_png(png_image)
-
-    png_image_in_base_64 = 'data:image/png;base64,{}'.format(
-        base64.b64encode(png_image.getvalue()).decode('utf8')
-    )
-
-    return png_image_in_base_64
+    return get_data_url(fig)
 
 
 def get_plot(df, ylabel='Produto', title=None):
@@ -229,15 +236,7 @@ def get_plot(df, ylabel='Produto', title=None):
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(large_num_formatter))
 
     plt.tight_layout()
-    png_image = io.BytesIO()
-    canvas = FigureCanvasAgg(fig)
-    canvas.print_png(png_image)
-
-    png_image_in_base_64 = 'data:image/png;base64,{}'.format(
-        base64.b64encode(png_image.getvalue()).decode('utf8')
-    )
-
-    return png_image_in_base_64
+    return get_data_url(fig)
 
 
 def create_app():
