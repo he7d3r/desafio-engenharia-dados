@@ -33,4 +33,4 @@ USER dashboarduser
 
 # TODO: Restore cron job
 # ENTRYPOINT ["/dashboard/entrypoint.sh"]
-CMD gunicorn --bind 0.0.0.0:$PORT "src.app:create_app()"
+CMD gunicorn --bind 0.0.0.0:$PORT "src.app:create_app('production')"

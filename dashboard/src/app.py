@@ -10,6 +10,7 @@ from flask import Flask, render_template
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 from src import commands, database
+from src.config import config
 
 
 def get_available_state_codes():
@@ -236,10 +237,9 @@ def get_plot(df, ylabel='Produto', title=None):
     return get_data_url(fig)
 
 
-def create_app():
+def create_app(config_name='default'):
     app = Flask(__name__)
-
-    app.config.from_object('src.config.Config')
+    app.config.from_object(config[config_name])
 
     from src import model
     database.init_app(app)
