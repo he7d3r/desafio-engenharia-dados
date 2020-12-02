@@ -5,7 +5,7 @@ from src.database import db
 
 def init_app(app):
     database_cli = AppGroup('database',
-                            short_help='Commands to mange the database')
+                            short_help='Commands to manage the database')
 
     @database_cli.command()
     def create():
