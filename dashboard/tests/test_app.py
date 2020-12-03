@@ -1,6 +1,9 @@
 import pytest
-from src.app import (get_month_name,
+from src.app import (create_app,
+                     get_month_name,
                      large_num_formatter)
+from src.database import db
+from src.model import StateContributions, TopByStateAndYear
 
 
 class TestGetMonthName:
@@ -52,3 +55,65 @@ class TestLargeNumFormatter:
         assert large_num_formatter(999949999999999) == '999.9 Tri.'
         assert large_num_formatter(999950000000000) == '1000.0 Tri.'
 
+
+@pytest.fixture
+def client():
+    app = create_app('testing')
+    with app.app_context():
+        db.create_all()
+        contrib1 = StateContributions(
+            kind='import',
+            year=2019,
+            state_code='SP',
+            state='São Paulo',
+            total=123456789,
+            percentage=4.2
+        )
+        contrib2 = StateContributions(
+            kind='export',
+            year=2019,
+            state_code='SP',
+            state='São Paulo',
+            total=111222333,
+            percentage=4.44
+        )
+        top1 = TopByStateAndYear(
+            state_code='SP',
+            state='São Paulo',
+            year=2019,
+            kind='import',
+            product_code='01064100',
+            product='Abelhas',
+            total=100200300
+        )
+        top2 = TopByStateAndYear(
+            state_code='SP',
+            state='São Paulo',
+            year=2019,
+            kind='export',
+            product_code='01064100',
+            product='Abelhas',
+            total=300200100
+        )
+        db.session.add(contrib1)
+        db.session.add(contrib2)
+        db.session.add(top1)
+        db.session.add(top2)
+        db.session.commit()
+
+        yield app.test_client()
+        db.drop_all()
+
+
+class TestSomeRoutes:
+    def test_missing_page(self, client):
+        response = client.get('/random_missing_page')
+        assert response.status_code == 404
+        assert bytes('Página Não Encontrada', 'utf-8') in response.data
+
+    def test_home_page(self, client):
+        response = client.get('/')
+        assert response.status_code == 200
+        assert b'Dashboard' in response.data
+        assert bytes('Estatísticas nacionais', 'utf-8') in response.data
+        assert bytes('Estatísticas estaduais', 'utf-8') in response.data
