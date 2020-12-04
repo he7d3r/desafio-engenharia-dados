@@ -78,14 +78,14 @@ To build and run the app image:
 
 ```shell
 docker build -f dashboard/Dockerfile -t <img_name> .
-docker run -d -e FLASK_APP='src/app.py' \
+docker run -d -e FLASK_APP='wsgi' \
     -e FLASK_ENV='development' \
     -e DATABASE_URL='sqlite:////data/trades.db' \
     -p 5000:5000 \
     -v `pwd`/data:/data \
     -v `pwd`/dashboard/src:/dashboard/src \
     --name <container_name> <img_name> \
-    gunicorn --reload --bind 0.0.0.0:5000 --workers 4 "src.app:create_app()"
+    gunicorn --reload --bind 0.0.0.0:5000 --workers 4 "wsgi:app"
 ```
 
 In this example, the app should be be available at http://localhost:5000/. If needed, add the option `--reload` to allow changes made to app source code (inside the folder `dashboard/src` on the host) to go live without needing to rebuild its image (reloading the page in the browser will be enough).

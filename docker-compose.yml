@@ -15,10 +15,10 @@ services:
         build:
             context: .
             dockerfile: dashboard/Dockerfile
-        command: gunicorn --reload --bind 0.0.0.0:${PORT:-5000} "src.app:create_app()"
+        command: gunicorn --reload --bind 0.0.0.0:${PORT:-5000} "wsgi:app"
         environment:
             - PORT=${PORT:-5000}
-            - FLASK_APP=src/app.py
+            - FLASK_APP=wsgi
             - DATABASE_URL=${DATABASE_URL:-sqlite:////data/trades.db}
             - SECRET_KEY=${SECRET_KEY:-dev_only_FyLXFDRhpl}
             - FLASK_ENV=${FLASK_ENV:-development}

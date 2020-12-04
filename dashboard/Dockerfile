@@ -26,6 +26,7 @@ COPY dashboard/Makefile ./
 
 # Copy the dashboard source to the working directory
 COPY dashboard/src/ ./src/
+COPY dashboard/wsgi.py ./
 
 # Run the image as a non-root user
 RUN useradd -m dashboarduser
@@ -33,4 +34,4 @@ USER dashboarduser
 
 # TODO: Restore cron job
 # ENTRYPOINT ["/dashboard/entrypoint.sh"]
-CMD gunicorn --bind 0.0.0.0:$PORT "src.app:create_app('production')"
+CMD gunicorn --bind 0.0.0.0:$PORT "wsgi:app"

@@ -6,11 +6,10 @@ from textwrap import fill
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import pandas as pd
-from flask import Flask, render_template
+from flask import abort, redirect, render_template, url_for
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
-from src import commands, database
-from src.config import config
+from src import database
 
 
 def get_available_state_codes():
@@ -237,118 +236,115 @@ def get_plot(df, ylabel='Produto', title=None):
     return get_data_url(fig)
 
 
-def create_app(config_name='default'):
-    app = Flask(__name__)
-    app.config.from_object(config[config_name])
+def index():
+    # Use a large state as default
+    large_state_code = 'SP'
+    # Use previous year as default
+    previous_year = datetime.now().year - 1
+    return redirect(url_for(
+        'dashboard',
+        state_code=large_state_code,
+        year=previous_year
+    ))
 
-    from src import model
-    database.init_app(app)
-    commands.init_app(app)
 
-    @app.route('/')
-    @app.route('/dashboard')
-    @app.route('/dashboard/')
-    @app.route('/dashboard/<string:state_code>/<int:year>')
-    @app.route('/dashboard/<string:state_code>/<int:year>/<int:month>')
-    def dashboard(state_code=None, year=None, month=None):
-        """
-        Show statistics about imports and exports for the state and year
-        provided in the URL.
+def dashboard(state_code, year, month=None):
+    """
+    Show statistics about imports and exports for the state and year provided
+    in the URL.
 
-        Parameters:
-            state_code: (str): The code of the state of origin/destiny the
-                               trade (default the first state available).
-            year: (int): The year of the trade (default the first year
-                         available).
-        """
-        previous_year = datetime.now().year - 1
-        available_state_codes = get_available_state_codes()
-        if state_code is None:
-            # Use a large state as default
-            if 'SP' in available_state_codes.index:
-                state_code = 'SP'
-            else:
-                state_code = str(available_state_codes.index[0])
-        if state_code in available_state_codes.index:
-            state_name = available_state_codes['state'][state_code]
-            available_years = get_available_years()
-            if year is None:
-                year = previous_year
-            if year in available_years:
-                month_options = get_month_options(year)
+    Parameters:
+        state_code: (str): The code of the state of origin/destiny the trade
+        (default the first state available).
+        year: (int): The year of the trade (default the first year available).
+    """
+    previous_year = datetime.now().year - 1
+    available_state_codes = get_available_state_codes()
+    if state_code not in available_state_codes.index:
+        return abort(404)
+    state_name = available_state_codes['state'][state_code]
 
-                if month_options and month in month_options:
-                    month_name = get_month_name(month)
-                else:
-                    month = None
-                    month_name = 'todos os meses'
+    available_years = get_available_years()
+    if year not in available_years:
+        return abort(404)
+    month_options = get_month_options(year)
 
-                if month is None and year == previous_year:
-                    group = f'({year})'
-                    img_top_importers = get_plot(
-                        get_top_contributions('import', year, index='state'),
-                        ylabel='Estado',
-                        title=f'Maiores importadores {group}'
-                    )
-                    img_top_exporters = get_plot(
-                        get_top_contributions('export', year, index='state'),
-                        ylabel='Estado',
-                        title=f'Maiores exportadores {group}'
-                    )
-                    img_contribution_to_imports = get_contribution_plot(
-                        get_top_contributions('import', year, limit=None,
-                                              index='state'),
-                        state=state_code,
-                        title='Representatividade das importações do estado no'
-                        + ' ano\nem relação ao total de importações do país'
-                    )
-                    img_contribution_to_exports = get_contribution_plot(
-                        get_top_contributions('export', year, limit=None,
-                                              index='state'),
-                        state=state_code,
-                        title='Representatividade das exportações do estado no'
-                        + ' ano\nem relação ao total de exportações do país'
-                    )
-                else:
-                    img_top_importers = None
-                    img_top_exporters = None
-                    img_contribution_to_imports = None
-                    img_contribution_to_exports = None
+    if month_options and month in month_options:
+        month_name = get_month_name(month)
+    else:
+        month = None
+        month_name = 'todos os meses'
 
-                group = f'({state_name}, {month_name} de {year})'
-                img_top_imports = get_plot(
-                    get_top_products('import', state_code, year, month,
-                                     index='product'),
-                    ylabel='Produto',
-                    title=f'Produtos mais importados {group}'
-                )
-                img_top_exports = get_plot(
-                    get_top_products('export', state_code, year, month,
-                                     index='product'),
-                    ylabel='Produto',
-                    title=f'Produtos mais exportados {group}'
-                )
-                return render_template(
-                    'dashboard.html',
-                    month_options=[None] + month_options,
-                    month=month,
-                    get_month_name=get_month_name,
-                    available_years=available_years,
-                    year=year,
-                    previous_year=previous_year,
-                    available_state_codes=available_state_codes,
-                    state_code=state_code,
-                    img_top_imports=img_top_imports,
-                    img_top_exports=img_top_exports,
-                    img_top_importers=img_top_importers,
-                    img_top_exporters=img_top_exporters,
-                    img_contribution_to_imports=img_contribution_to_imports,
-                    img_contribution_to_exports=img_contribution_to_exports
-                )
-        return 'Parâmetro(s) inválido(s).'
+    if month is None and year == previous_year:
+        group = f'({year})'
+        img_top_importers = get_plot(
+            get_top_contributions('import', year, index='state'),
+            ylabel='Estado',
+            title=f'Maiores importadores {group}'
+        )
+        img_top_exporters = get_plot(
+            get_top_contributions('export', year, index='state'),
+            ylabel='Estado',
+            title=f'Maiores exportadores {group}'
+        )
+        img_contribution_to_imports = get_contribution_plot(
+            get_top_contributions('import', year, limit=None, index='state'),
+            state=state_code,
+            title='Representatividade das importações do estado no'
+            + ' ano\nem relação ao total de importações do país'
+        )
+        img_contribution_to_exports = get_contribution_plot(
+            get_top_contributions('export', year, limit=None, index='state'),
+            state=state_code,
+            title='Representatividade das exportações do estado no'
+            + ' ano\nem relação ao total de exportações do país'
+        )
+    else:
+        img_top_importers = None
+        img_top_exporters = None
+        img_contribution_to_imports = None
+        img_contribution_to_exports = None
 
-    @app.errorhandler(404)
-    def page_not_found(e):
-        return render_template('404.html'), 404
+    group = f'({state_name}, {month_name} de {year})'
+    img_top_imports = get_plot(
+        get_top_products('import', state_code, year, month, index='product'),
+        ylabel='Produto',
+        title=f'Produtos mais importados {group}'
+    )
+    img_top_exports = get_plot(
+        get_top_products('export', state_code, year, month, index='product'),
+        ylabel='Produto',
+        title=f'Produtos mais exportados {group}'
+    )
+    return render_template(
+        'dashboard.html',
+        month_options=[None] + month_options,
+        month=month,
+        get_month_name=get_month_name,
+        available_years=available_years,
+        year=year,
+        previous_year=previous_year,
+        available_state_codes=available_state_codes,
+        state_code=state_code,
+        img_top_imports=img_top_imports,
+        img_top_exports=img_top_exports,
+        img_top_importers=img_top_importers,
+        img_top_exporters=img_top_exporters,
+        img_contribution_to_imports=img_contribution_to_imports,
+        img_contribution_to_exports=img_contribution_to_exports
+    )
 
-    return app
+
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+
+def init_app(app):
+    app.add_url_rule('/', view_func=index)
+    app.add_url_rule('/dashboard', view_func=dashboard)
+    app.add_url_rule('/dashboard/', view_func=index)
+    app.add_url_rule('/dashboard/<string:state_code>/<int:year>',
+                     view_func=dashboard)
+    app.add_url_rule('/dashboard/<string:state_code>/<int:year>/<int:month>',
+                     view_func=dashboard)
+    app.register_error_handler(404, page_not_found)

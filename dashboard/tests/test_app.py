@@ -1,9 +1,10 @@
+from datetime import datetime
+
 import pytest
-from src.app import (create_app,
-                     get_month_name,
-                     large_num_formatter)
+from src import create_app
 from src.database import db
 from src.model import StateContributions, TopByStateAndYear
+from src.routes import get_month_name, large_num_formatter
 
 
 class TestGetMonthName:
@@ -95,10 +96,30 @@ def client():
             product='Abelhas',
             total=300200100
         )
+        top3 = TopByStateAndYear(
+            state_code='SP',
+            state='São Paulo',
+            year=2018,
+            kind='import',
+            product_code='01064100',
+            product='Abelhas',
+            total=100200300
+        )
+        top4 = TopByStateAndYear(
+            state_code='SP',
+            state='São Paulo',
+            year=2018,
+            kind='export',
+            product_code='01064100',
+            product='Abelhas',
+            total=300200100
+        )
         db.session.add(contrib1)
         db.session.add(contrib2)
         db.session.add(top1)
         db.session.add(top2)
+        db.session.add(top3)
+        db.session.add(top4)
         db.session.commit()
 
         yield app.test_client()
@@ -111,9 +132,19 @@ class TestSomeRoutes:
         assert response.status_code == 404
         assert bytes('Página Não Encontrada', 'utf-8') in response.data
 
-    def test_home_page(self, client):
+    def test_home_page_redirect(self, client):
         response = client.get('/')
+
+        large_state_code = 'SP'
+        previous_year = datetime.now().year - 1
+        target_url = f'/dashboard/{large_state_code}/{previous_year}'
+
+        assert response.status_code == 302
+        assert response.location.endswith(target_url)
+
+    def test_year_without_national_statistics(self, client):
+        response = client.get('/dashboard/SP/2018')
         assert response.status_code == 200
         assert b'Dashboard' in response.data
-        assert bytes('Estatísticas nacionais', 'utf-8') in response.data
+        assert bytes('Estatísticas nacionais', 'utf-8') not in response.data
         assert bytes('Estatísticas estaduais', 'utf-8') in response.data
