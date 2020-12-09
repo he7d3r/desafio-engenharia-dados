@@ -1,9 +1,5 @@
 from datetime import datetime
 
-import pytest
-from src import create_app
-from src.database import db
-from src.model import StateContributions, TopByStateAndYear
 from src.routes import get_month_name, large_num_formatter
 
 
@@ -55,75 +51,6 @@ class TestLargeNumFormatter:
         assert large_num_formatter(420420420420000) == '420.4 Tri.'
         assert large_num_formatter(999949999999999) == '999.9 Tri.'
         assert large_num_formatter(999950000000000) == '1000.0 Tri.'
-
-
-@pytest.fixture
-def client():
-    app = create_app('testing')
-    with app.app_context():
-        db.create_all()
-        contrib1 = StateContributions(
-            kind='import',
-            year=2019,
-            state_code='SP',
-            state='São Paulo',
-            total=123456789,
-            percentage=4.2
-        )
-        contrib2 = StateContributions(
-            kind='export',
-            year=2019,
-            state_code='SP',
-            state='São Paulo',
-            total=111222333,
-            percentage=4.44
-        )
-        top1 = TopByStateAndYear(
-            state_code='SP',
-            state='São Paulo',
-            year=2019,
-            kind='import',
-            product_code='01064100',
-            product='Abelhas',
-            total=100200300
-        )
-        top2 = TopByStateAndYear(
-            state_code='SP',
-            state='São Paulo',
-            year=2019,
-            kind='export',
-            product_code='01064100',
-            product='Abelhas',
-            total=300200100
-        )
-        top3 = TopByStateAndYear(
-            state_code='SP',
-            state='São Paulo',
-            year=2018,
-            kind='import',
-            product_code='01064100',
-            product='Abelhas',
-            total=100200300
-        )
-        top4 = TopByStateAndYear(
-            state_code='SP',
-            state='São Paulo',
-            year=2018,
-            kind='export',
-            product_code='01064100',
-            product='Abelhas',
-            total=300200100
-        )
-        db.session.add(contrib1)
-        db.session.add(contrib2)
-        db.session.add(top1)
-        db.session.add(top2)
-        db.session.add(top3)
-        db.session.add(top4)
-        db.session.commit()
-
-        yield app.test_client()
-        db.drop_all()
 
 
 class TestSomeRoutes:
