@@ -1,4 +1,3 @@
-import pytest
 from src.commands.data import get_products, get_states
 
 
