@@ -1,4 +1,4 @@
-BASEURL = http://www.mdic.gov.br/balanca/bd
+BASEURL = https://balanca.economia.gov.br/balanca/bd
 FIRST := $$(date --date='-3 year' +%Y)
 LAST := $$(date --date='-1 year' +%Y)
 YEARS := $(shell seq ${FIRST} ${LAST})
@@ -30,12 +30,13 @@ all: ${TABLES} ${IMPORTS} ${EXPORTS} /data/trades.db tests
 	echo "$@ success"
 
 # For an approach using curl, see https://stackoverflow.com/a/32703728/2062663
+# FIXME: Replace --no-check-certificate by a proper solution
 ${IMPORTS}: /data/IMP_%.csv:
-	wget -P /data -Nc -nv "$(BASEURL)/comexstat-bd/ncm/$(subst /data/,,$@)"
+	wget -P /data -Nc -nv --no-check-certificate "$(BASEURL)/comexstat-bd/ncm/$(subst /data/,,$@)"
 ${EXPORTS}: /data/EXP_%.csv:
-	wget -P /data -Nc -nv "$(BASEURL)/comexstat-bd/ncm/$(subst /data/,,$@)"
+	wget -P /data -Nc -nv --no-check-certificate "$(BASEURL)/comexstat-bd/ncm/$(subst /data/,,$@)"
 ${TABLES}: /data/%:
-	wget -P /data -Nc -nv "$(BASEURL)/tabelas/$(subst /data/,,$@)"
+	wget -P /data -Nc -nv --no-check-certificate "$(BASEURL)/tabelas/$(subst /data/,,$@)"
 
 # Populate the database with with the full data, by kind and by year, and also
 # add some aggregated data which will be used by the app. For the most recent
