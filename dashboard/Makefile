@@ -52,12 +52,10 @@ ${TABLES}: /data/%:
 			fi; \
 			flask data aggregate-by-state-and-add $$CSV /data/UF.csv \
 				/data/NCM.csv --kind=$$KIND --year=$$YEAR; \
-			if [ "$$YEAR" -eq ${LAST} ]; then \
-				flask data aggregate-by-month-and-state-and-add $$CSV \
-					 /data/UF.csv /data/NCM.csv --kind=$$KIND --year=$$YEAR; \
-				flask data aggregate-state-contributions-and-add $$CSV \
-					/data/UF.csv --kind=$$KIND --year=$$YEAR; \
-			fi; \
+			flask data aggregate-by-month-and-state-and-add $$CSV \
+					/data/UF.csv /data/NCM.csv --kind=$$KIND --year=$$YEAR; \
+			flask data aggregate-state-contributions-and-add $$CSV \
+				/data/UF.csv --kind=$$KIND --year=$$YEAR; \
 			YEAR=$$((YEAR + 1)); \
 		done; \
 	done

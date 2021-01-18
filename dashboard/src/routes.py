@@ -275,7 +275,7 @@ def dashboard(state_code, year, month=None):
         month = None
         month_name = 'todos os meses'
 
-    if month is None and year == previous_year:
+    if month is None:
         group = f'({year})'
         img_top_importers = get_plot(
             get_top_contributions('import', year, index='state'),
@@ -323,7 +323,6 @@ def dashboard(state_code, year, month=None):
         get_month_name=get_month_name,
         available_years=available_years,
         year=year,
-        previous_year=previous_year,
         available_state_codes=available_state_codes,
         state_code=state_code,
         img_top_imports=img_top_imports,
