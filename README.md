@@ -107,3 +107,25 @@ For a first look into the data, check out the Jupyter notebooks inside the direc
 Currently, the dashboard uses a database with the following tables:
 
 ![Database Diagram](diagram.png)
+
+## Deployment instructions
+
+To deploy the dashboard on Heroku, just run the following command, replacing
+`my-new-dashboard` by a name of your choice.
+
+```bash
+git clone git@github.com:he7d3r/desafio-engenharia-dados.git
+cd desafio-engenharia-dados
+heroku container:login
+heroku create my-new-dashboard
+docker-compose build app
+docker tag desafio-engenharia-dados_app:latest registry.heroku.com/my-new-dashboard/web
+docker push registry.heroku.com/my-new-dashboard/web
+heroku container:release web
+heroku addons:create heroku-postgresql:hobby-dev
+heroku run make all
+```
+
+Wait a few minutes, while the raw data is downloaded, transformed, loaded into
+the database and some sanity checks are performed. Once it is done, you should
+be able to access the dashboard at <https://my-new-dashboard.herokuapp.com>.
