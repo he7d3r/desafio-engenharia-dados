@@ -69,9 +69,9 @@ class TestSomeRoutes:
         assert response.status_code == 302
         assert response.location.endswith(target_url)
 
-    def test_year_without_national_statistics(self, client):
-        response = client.get('/dashboard/SP/2018')
+    def test_page_with_plotted_graphs(self, client):
+        response = client.get('/dashboard/SP/2019')
         assert response.status_code == 200
         assert b'Dashboard' in response.data
-        assert bytes('Estatísticas nacionais', 'utf-8') not in response.data
-        assert bytes('Estatísticas estaduais', 'utf-8') in response.data
+        assert response.data.count(b'<img') == 6
+        assert bytes('Estatísticas', 'utf-8') in response.data

@@ -258,7 +258,6 @@ def dashboard(state_code, year, month=None):
         (default the first state available).
         year: (int): The year of the trade (default the first year available).
     """
-    previous_year = datetime.now().year - 1
     available_state_codes = get_available_state_codes()
     if state_code not in available_state_codes.index:
         return abort(404)
