@@ -5,9 +5,9 @@
 
 ### See it in action
 
-The dashboard is currently available at https://import-export-dashboard.herokuapp.com.
+The dashboard is currently available at <https://import-export-dashboard.herokuapp.com>.
 
-### Deployment a new instance
+### Deploy a new instance
 
 To deploy the dashboard on Heroku, just run the following command, replacing
 `my-new-dashboard` by a name of your choice.
@@ -27,7 +27,7 @@ heroku run make all
 
 Wait a few minutes, while the raw data is downloaded, transformed, loaded into
 the database and some sanity checks are performed. Once it is done, you should
-be able to access the dashboard at <https://my-new-dashboard.herokuapp.com>.
+be able to access the dashboard at `https://my-new-dashboard.herokuapp.com`.
 
 ### Run locally
 
