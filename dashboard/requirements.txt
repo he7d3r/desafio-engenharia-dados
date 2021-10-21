@@ -3,7 +3,7 @@ agate-dbf==0.2.2
 agate-excel==0.2.3
 agate-sql==0.5.5
 attrs==20.3.0
-Babel==2.9.0
+Babel==2.9.1
 certifi==2020.11.8
 click==7.1.2
 csvkit==1.0.5
